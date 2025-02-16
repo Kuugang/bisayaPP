@@ -1,0 +1,13 @@
+SUGOD
+
+MUGNA NUMERO x = 10, a, b, res = 1
+
+ALANG SA(x = 10, a = 5, b = 10; x > 0 UG a == 5 UG b <> 10 + x; x--)
+PUNDOK{
+    res = x * res
+    PRINT(res)
+}
+
+PRINT(res)
+
+KATAPUSAN

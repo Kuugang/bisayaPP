@@ -1,0 +1,473 @@
+const {
+  TT_INT,
+  TT_FLOAT,
+  TT_LETRA,
+  TT_STRING,
+  TT_IDENTIFIER,
+  TT_KEYWORD,
+  TT_PLUS,
+  TT_MINUS,
+  TT_MUL,
+  TT_DIV,
+  TT_MOD,
+  TT_POW,
+  TT_EQ,
+  TT_LPAREN,
+  TT_RPAREN,
+  TT_LSQUARE,
+  TT_RSQUARE,
+  TT_EE,
+  TT_NE,
+  TT_LT,
+  TT_GT,
+  TT_LTE,
+  TT_GTE,
+  TT_COMMA,
+  TT_ARROW,
+  TT_NEWLINE,
+  TT_EOF,
+  TT_NOT,
+  TT_BOOLEAN,
+  TT_DECREMENT,
+  TT_INCREMENT,
+} = require("./Token.js");
+const { Char, String, Boolean, Number, List } = require("./Value.js");
+const { RTError, SemanticError } = require("./Error.js");
+const { NumberNode } = require("./Node.js");
+
+class RTResult {
+  constructor() {
+    this.reset();
+  }
+
+  reset() {
+    this.value = null;
+    this.error = null;
+    this.func_return_value = null;
+    this.loop_should_continue = false;
+    this.loop_should_break = false;
+  }
+
+  register(res) {
+    this.error = res.error;
+    this.func_return_value = res.func_return_value;
+    this.loop_should_continue = res.loop_should_continue;
+    this.loop_should_break = res.loop_should_break;
+    return res.value;
+  }
+
+  success(value) {
+    this.reset();
+    this.value = value;
+    return this;
+  }
+
+  success_return(value) {
+    this.reset();
+    this.func_return_value = value;
+    return this;
+  }
+
+  success_continue() {
+    this.reset();
+    this.loop_should_continue = true;
+    return this;
+  }
+
+  success_break() {
+    this.reset();
+    this.loop_should_break = true;
+    return this;
+  }
+
+  failure(error) {
+    this.reset();
+    this.error = error;
+    return this;
+  }
+
+  should_return() {
+    // Note: this will allow you to continue and break outside the current function
+    return (
+      this.error ||
+      this.func_return_value ||
+      this.loop_should_continue ||
+      this.loop_should_break
+    );
+  }
+}
+
+class Interpreter {
+  visit(node, context) {
+    if (node === null) return [null, null];
+    let methodName = `visit_${node.constructor.name}`;
+    let method = this[methodName] || this.no_visit_method;
+    let result = method.call(this, node, context);
+    return result;
+  }
+
+  no_visit_method(node, context) {
+    throw new Error(`No visit_${node.constructor.name} method defined`);
+  }
+
+  visit_NumberNode(node, context) {
+    return new RTResult().success(
+      new Number(node.tok.value, node.type)
+        .set_context(context)
+        .set_pos(node.pos_start, node.pos_end),
+    );
+  }
+
+  visit_CharNode(node, context) {
+    return new RTResult().success(
+      new Char(node.tok.value)
+        .set_context(context)
+        .set_pos(node.pos_start, node.pos_end),
+    );
+  }
+
+  visit_BooleanNode(node, context) {
+    let value;
+    if (node.tok.value === "OO") {
+      value = "OO";
+    } else if (node.tok.value === "DILI") {
+      value = "DILI";
+    }
+
+    return new RTResult().success(
+      new Boolean(value)
+        .set_context(context)
+        .set_pos(node.pos_start, node.pos_end),
+    );
+  }
+
+  visit_StringNode(node, context) {
+    return new RTResult().success(
+      new String(node.tok.value)
+        .set_context(context)
+        .set_pos(node.pos_start, node.pos_end),
+    );
+  }
+
+  visit_UnaryOperationNode(node, context) {
+    let res = new RTResult();
+    let number = res.register(this.visit(node.node, context));
+    if (res.should_return()) return res;
+
+    let error = null;
+
+    if (node.op_tok.type == TT_MINUS) {
+      [number, error] = number.multiply(new Number(-1));
+    } else if (node.op_tok.type == TT_NOT) {
+      [number, error] = number.notted();
+    }
+
+    if (error) return res.failure(error);
+    else return res.success(number.set_pos(node.pos_start, node.pos_end));
+  }
+
+  visit_PostfixOperationNode(node, context) {
+    let res = new RTResult();
+    let number = res.register(this.visit(node.node, context));
+
+    if (res.should_return()) return res;
+
+    let error = null;
+
+    let originalValue = number.copy();
+
+    if (node.op_tok.type == TT_INCREMENT) {
+      [number, error] = number.add(new Number(1));
+    } else if (node.op_tok.type == TT_DECREMENT) {
+      [number, error] = number.subtract(new Number(1));
+    }
+
+    if (error) return res.failure(error);
+
+    context.symbol_table.set(node.node.var_name_tok.value, number);
+
+    return res.success(originalValue.set_pos(node.pos_start, node.pos_end));
+  }
+
+  visit_BinaryOperationNode(node, context) {
+    let res = new RTResult();
+
+    let left = res.register(this.visit(node.left_node, context));
+    if (res.should_return()) return res;
+
+    let right = res.register(this.visit(node.right_node, context));
+    if (res.should_return()) return res;
+
+    let [result, error] = [null, null];
+
+    switch (node.op_tok.type) {
+      case TT_PLUS:
+        [result, error] = left.add(right);
+        break;
+      case TT_MINUS:
+        [result, error] = left.subtract(right);
+        break;
+      case TT_MUL:
+        [result, error] = left.multiply(right);
+        break;
+      case TT_DIV:
+        [result, error] = left.divide(right);
+        break;
+      case TT_POW:
+        [result, error] = left.power(right);
+        break;
+      case TT_EE:
+        [result, error] = left.eq(right);
+        break;
+      case TT_NE:
+        [result, error] = left.ne(right);
+        break;
+      case TT_LT:
+        [result, error] = left.lt(right);
+        break;
+      case TT_GT:
+        [result, error] = left.gt(right);
+        break;
+      case TT_LTE:
+        [result, error] = left.lte(right);
+        break;
+      case TT_GTE:
+        [result, error] = left.gte(right);
+        break;
+      case TT_MOD:
+        [result, error] = left.modulo(right);
+        break;
+      case TT_KEYWORD:
+        if (node.op_tok.matches(TT_KEYWORD, "UG")) {
+          [result, error] = left.and(right);
+        } else if (node.op_tok.matches(TT_KEYWORD, "O")) {
+          [result, error] = left.or(right);
+          break;
+        }
+    }
+
+    if (error) return res.failure(error);
+    else return res.success(result.set_pos(node.pos_start, node.pos_end));
+  }
+
+  visit_ForNode(node, context) {
+    let res = new RTResult();
+    let elements = [];
+
+    let initialization_node = res.register(
+      this.visit(node.initialization_node, context),
+    );
+    if (res.should_return()) return res;
+
+    let condition_node = res.register(this.visit(node.condition_node, context));
+    if (res.should_return()) return res;
+
+    while (true) {
+      condition_node = res.register(this.visit(node.condition_node, context));
+      if (res.should_return()) return res;
+
+      if (condition_node.value === 0) {
+        break;
+      }
+
+      let value = res.register(this.visit(node.body_node, context));
+      if (
+        res.should_return() &&
+        res.loop_should_continue == false &&
+        res.loop_should_break == false
+      ) {
+        return res;
+      }
+
+      if (res.loop_should_continue) continue;
+
+      if (res.loop_should_break) break;
+
+      elements.push(value);
+
+      res.register(this.visit(node.update_node, context));
+      if (res.should_return()) return res;
+    }
+
+    return res.success(
+      new Number(null),
+      // Number.null if node.should_return_null else
+      new List(elements)
+        .set_context(context)
+        .set_pos(node.pos_start, node.pos_end),
+    );
+  }
+
+  visit_ListNode(node, context) {
+    let res = new RTResult();
+    let elements = [];
+    for (let element_node of node.element_nodes) {
+      let value = res.register(this.visit(element_node, context));
+
+      if (res.should_return()) return res; // Exit function immediately
+
+      elements.push(value);
+    }
+    return res.success(
+      new List(elements)
+        .set_context(context)
+        .set_pos(node.pos_start, node.pos_end),
+    );
+  }
+
+  visit_VarAssignNode(node, context) {
+    let res = new RTResult();
+    let var_name = node.var_name_tok.value;
+    let variable = context.symbol_table.get(var_name);
+
+    if (variable !== null) {
+      return res.failure(
+        new RTError(
+          variable.pos_start,
+          variable.pos_end,
+          `Variable '${var_name}' is previously defined here`,
+          context,
+        ),
+      );
+    }
+
+    let value = null;
+    if (node.value_node) {
+      value = res.register(this.visit(node.value_node, context));
+      if (res.should_return()) return res;
+
+      if (
+        [TT_FLOAT, TT_INT].includes(node.type) &&
+        !(value instanceof Number)
+      ) {
+        return res.failure(
+          new SemanticError(
+            value.pos_start,
+            value.pos_end,
+            `Expected ${node.type} received ${value.type}`,
+            context,
+          ),
+        );
+      }
+
+      if (node.type === TT_LETRA && !(value instanceof Char)) {
+        return res.failure(
+          new SemanticError(
+            value.pos_start,
+            value.pos_end,
+            `Expected ${node.type} received ${value.type}`,
+            context,
+          ),
+        );
+      }
+    } else {
+      switch (node.type) {
+        case TT_INT:
+        case TT_FLOAT:
+          value = new Number(null, node.type);
+          break;
+        case TT_BOOLEAN:
+          value = new Boolean(null);
+          break;
+        case TT_LETRA:
+          value = new Char(null);
+          break;
+        case TT_STRING:
+          value = new String(null);
+          break;
+      }
+      value = value.set_pos(node.pos_start, node.pos_end).set_context(context);
+    }
+
+    context.symbol_table.set(var_name, value);
+    return res.success(value);
+  }
+
+  visit_VarReassignNode(node, context) {
+    let res = new RTResult();
+    let var_name = node.var_name_tok.value;
+
+    let old_value = context.symbol_table.get(var_name);
+
+    if (!old_value) {
+      return res.failure(
+        new RTError(
+          node.pos_start,
+          node.pos_end,
+          `'${var_name}' is not defined`,
+          context,
+        ),
+      );
+    }
+
+    let new_value = res.register(this.visit(node.value_node, context));
+    if (res.should_return()) return res;
+    if (old_value.type !== new_value.type) {
+      return res.failure(
+        new RTError(
+          node.pos_start,
+          node.pos_end,
+          `Expected ${old_value.type} received ${new_value.type}`,
+          context,
+        ),
+      );
+    }
+
+    context.symbol_table.set(var_name, new_value);
+
+    new_value = new_value
+      .copy()
+      .set_pos(old_value.pos_start, old_value.pos_end)
+      .set_context(context);
+
+    return res.success(new_value);
+  }
+
+  visit_VarAccessNode(node, context) {
+    let res = new RTResult();
+    let var_name = node.var_name_tok.value;
+    let value = context.symbol_table.get(var_name);
+
+    if (!value) {
+      return res.failure(
+        new RTError(
+          node.pos_start,
+          node.pos_end,
+          `'${var_name}' is not defined`,
+          context,
+        ),
+      );
+    }
+
+    value = value
+      .copy()
+      .set_pos(node.pos_start, node.pos_end)
+      .set_context(context);
+    return res.success(value);
+  }
+
+  visit_CallNode(node, context) {
+    let res = new RTResult();
+    let args = [];
+    let value_to_call = res.register(this.visit(node.node_to_call, context));
+
+    if (res.should_return()) return res;
+    value_to_call = value_to_call.copy().set_pos(node.pos_start, node.pos_end);
+
+    for (let arg_node of node.arg_nodes) {
+      args.push(res.register(this.visit(arg_node, context)));
+      if (res.should_return()) return res;
+    }
+
+    let return_value = res.register(value_to_call.execute(args));
+    if (res.should_return()) return res;
+
+    return_value = return_value
+      .copy()
+      .set_pos(node.pos_start, node.pos_end)
+      .set_context(context);
+    return res.success(return_value);
+  }
+}
+
+module.exports = { RTResult, Interpreter };

@@ -1,0 +1,72 @@
+program     : SUGOD statements KATAPUSAN
+
+statements  : NEWLINE* statement ((NEWLINE)+ statement)* NEWLINE*
+
+statement   : KEYWORD: RETURN expr?
+            | KEYWORD: CONTINUE
+            | KEYWORD: BREAK
+            | expr
+
+expr        : compr-expr ((KEYWORD:AND|KEYWORD:OR) compr-expr)*  
+            | var-def
+            | var-assign
+
+var-def     : KEYWORD: MUGNA KEYWORD: DATATYPE var-assign
+
+var-assign  : IDENTIFIER (EQ IDENTIFIER)* (EQ expr)? (, (EQ IDENTIFIER)* (EQ expr)? )*
+
+compr-expr  : NOT compr-expr
+            | arith-expr ((EE|LT|GT|LTE|GTE) arith-expr)*
+        
+arith-expr  : term ((PLUS|MINUS) term)*
+
+term        : factor ((MUL|DIV|%) factor)*
+
+factor      : (PLUS|MINUS) factor
+            | power (INCREMENT | DECREMENT)
+            | power
+
+power       : call (POW factor)*
+
+call        : atom (LPAREN (expr (COMMA expr)*)? RPAREN)?
+
+atom        : INT|FLOAT|STRING|BOOL|IDENTIFIER
+            | LPAREN expr RPAREN
+            | list-expr
+            | if-expr
+            | for-expr
+            | while-expr
+            | func-def
+            | print-func
+
+list-expr   : LSQUARE (expr (COMMA expr)*)? RSQUARE
+
+if-expr     : KEYWORD:IF expr KEYWORD:THEN 
+              (statement if-expr-b|if-expr-c?)
+              | (NEWLINE statements KEYWORD:END|if-expr-b|if-expr-c)
+
+if-expr-b   : KEYWORD:ELIF expr KEYWORD:THEN 
+              (statement if-expr-b|if-expr-c?)
+              | (NEWLINE statements KEYWORD:END|if-expr-b|if-expr-c)
+
+if-expr-c   : KEYWORD:ELSE 
+              statement
+              | (NEWLINE statements KEYWORD:END)
+            
+for-expr    : KEYWORD: ALANG SA (IDENTIFIER | var-def | var-assign COMMA compr-expr COMMA compr-expr) block
+
+
+while-expr  : KEYWORD: WHILE expr KEYWORD:THEN 
+              statement
+              | (NEWLINE statements KEYWORD:END)
+
+func-def    : KEYWORD:FUN IDENTIFIER?
+              LPAREN (IDENTIFIER (COMMA IDENTIFIER)*)? RPAREN
+              (ARROW statement)
+              | (NEWLINE statements KEYWORD:END)
+
+print-func  : KEYWORD: IPAKITA
+
+block       : KEYWORD: PUNDOK LCURLY
+              statements
+              RCURLY
