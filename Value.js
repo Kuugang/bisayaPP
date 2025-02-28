@@ -201,7 +201,7 @@ class Number extends Value {
     if (type == "TIPIK") {
       this.value = Math.floor(value);
     } else {
-      this.value = value;
+      this.value = global.Number(value);
     }
   }
 

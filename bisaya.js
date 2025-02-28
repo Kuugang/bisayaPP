@@ -8,6 +8,14 @@ const { SymbolTable } = require("./SymbolTable.js");
 const { BuiltInFunction } = require("./Function.js");
 
 const prompt = require("prompt-sync")();
+const args = process.argv;
+
+if (args[2] === undefined) {
+  console.error("Provide input file");
+  return;
+}
+
+const file_name = args[2];
 
 let global_symbol_table = new SymbolTable();
 global_symbol_table.set("PRINT", BuiltInFunction.print);
@@ -30,7 +38,7 @@ function run(fn, text) {
   return [result.value, result.error];
 }
 
-fs.readFile("main.test", "utf8", (err, script) => {
+fs.readFile(file_name, "utf8", (err, script) => {
   if (err) {
     console.error("Error reading file:", err);
     return;
@@ -40,7 +48,6 @@ fs.readFile("main.test", "utf8", (err, script) => {
   if (error) {
     console.log(error.as_string());
   } else if (result) {
-    // console.log(result);
     // if (result.elements.length == 1) console.log(String(result.elements[0]));
     // else console.log(String(result));
   }

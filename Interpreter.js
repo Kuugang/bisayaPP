@@ -254,10 +254,7 @@ class Interpreter {
     let res = new RTResult();
     let elements = [];
 
-    let initialization_node = res.register(
-      this.visit(node.initialization_node, context),
-    );
-    if (res.should_return()) return res;
+    res.register(this.visit(node.initialization_node, context));
 
     let condition_node = res.register(this.visit(node.condition_node, context));
     if (res.should_return()) return res;
@@ -467,6 +464,20 @@ class Interpreter {
       .set_pos(node.pos_start, node.pos_end)
       .set_context(context);
     return res.success(return_value);
+  }
+
+  visit_PrintNode(node, context) {
+    let res = new RTResult();
+    let args = node.arg_nodes;
+    let value = "";
+    for (let i = 0; i < args.length; i++) {
+      let arg_value = res.register(this.visit(args[i], context));
+      if (res.should_return()) return res;
+      value += arg_value.value;
+    }
+    value += "\0";
+    process.stdout.write(value);
+    return res.success(new Number(0));
   }
 }
 

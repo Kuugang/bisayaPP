@@ -37,6 +37,8 @@ const {
   TT_SEMICOLON,
   TT_INCREMENT,
   TT_DECREMENT,
+  TT_COLON,
+  TT_CONCAT,
 } = require("./Token.js");
 const { IllegalCharError, InvalidSyntaxError } = require("./Error.js");
 
@@ -57,9 +59,11 @@ class Lexer {
 
   make_tokens() {
     let tokens = [];
-
     while (this.current_char != null) {
-      if ([" ", "\t", "#"].includes(this.current_char)) {
+      if (
+        [" ", "\t", "#"].includes(this.current_char) ||
+        this.current_char.charCodeAt(0) === 13
+      ) {
         this.advance();
       } else if (/^[0-9]$/.test(this.current_char)) {
         tokens.push(this.make_number());
@@ -69,11 +73,15 @@ class Lexer {
       } else if (this.current_char == ";") {
         tokens.push(new Token(TT_SEMICOLON, null, this.pos, null));
         this.advance();
+      } else if (this.current_char == ":") {
+        tokens.push(new Token(TT_COLON, null, this.pos, null));
+        this.advance();
+      } else if (this.current_char == "&") {
+        tokens.push(new Token(TT_CONCAT, null, this.pos, null));
+        this.advance();
       } else if (['"', "'"].includes(this.current_char)) {
         const [result, error] = this.make_string_or_symbol();
-        if (error) {
-          return [null, new InvalidSyntaxError(error[0], error[1], error[2])];
-        }
+        if (error) return [null, error];
         tokens.push(result);
       } else if (/[a-zA-Z_]/.test(this.current_char)) {
         tokens.push(this.make_identifier());
@@ -102,6 +110,10 @@ class Lexer {
       } else if (this.current_char == "}") {
         tokens.push(new Token(TT_RBRACE, null, this.pos, null));
         this.advance();
+      } else if (this.current_char == "[") {
+        let [result, error] = this.make_escaped();
+        if (error) return [null, error];
+        tokens.push(result);
       } else if (this.current_char == "=") {
         tokens.push(this.make_equal());
       } else if (this.current_char == ",") {
@@ -134,6 +146,27 @@ class Lexer {
     for (let i = 0; i < steps; i++) {
       this.advance();
     }
+  }
+
+  make_escaped() {
+    let pos_start = this.pos.copy();
+    this.advance();
+    let char;
+
+    if (this.current_char !== "]") {
+      char = this.current_char;
+      this.advance();
+      if (this.current_char !== "]") {
+        return [
+          null,
+          new InvalidSyntaxError(pos_start, this.pos, "Expected character"),
+        ];
+      }
+    }
+
+    this.advance();
+
+    return [new Token(TT_LETRA, char, pos_start, this.pos), null];
   }
 
   make_greater() {
@@ -225,7 +258,11 @@ class Lexer {
       if (this.current_char === "\n" || this.current_char === null) {
         return [
           null,
-          [pos_start, this.pos, "Missing terminating " + open + " character"],
+          new InvalidSyntaxError(
+            pos_start,
+            this.pos,
+            "Missing terminating " + open + " character",
+          ),
         ];
       }
       id_str += this.current_char;

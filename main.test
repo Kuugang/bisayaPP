@@ -1,13 +1,11 @@
 SUGOD
 
-MUGNA NUMERO x = 10, a, b, res = 1
+MUGNA NUMERO x, y, z = 5
+MUGNA LETRA a_1 = 'n'
+MUGNA TINUOD t = OO
+x = y = 4
+a_1 = 'c'
 
-ALANG SA(x = 10, a = 5, b = 10; x > 0 UG a == 5 UG b <> 10 + x; x--)
-PUNDOK{
-    res = x * res
-    PRINT(res)
-}
-
-PRINT(res)
+IPAKITA: x & t & z & $ & a_1 & [#] & "last"
 
 KATAPUSAN

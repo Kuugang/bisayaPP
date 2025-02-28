@@ -13,6 +13,7 @@ const {
   VarReassignNode,
   ForNode,
   PostfixOperationNode,
+  PrintNode,
 } = require("./Node.js");
 const {
   Token,
@@ -53,6 +54,8 @@ const {
   TT_SEMICOLON,
   TT_INCREMENT,
   TT_DECREMENT,
+  TT_COLON,
+  TT_CONCAT,
 } = require("./Token.js");
 
 class ParseResult {
@@ -248,6 +251,11 @@ class Parser {
       );
     }
 
+    if (this.current_tok.matches(TT_KEYWORD, "IPAKITA")) {
+      let print_statement = res.register(this.print_statement());
+      return res.success(print_statement);
+    }
+
     let expr = res.register(this.expr());
 
     if (res.error) {
@@ -262,6 +270,66 @@ class Parser {
 
     return res.success(expr);
   }
+
+  print_statement = () => {
+    let res = new ParseResult();
+    let pos_start = this.current_tok.pos_start.copy();
+
+    if (!this.current_tok.matches(TT_KEYWORD, "IPAKITA")) {
+      return res.failure(
+        new InvalidSyntaxError(
+          pos_start,
+          this.current_tok.pos_end,
+          "Expected 'IPAKITA'",
+        ),
+      );
+    }
+    res.register_advancement();
+    this.advance();
+
+    if (this.current_tok.type !== TT_COLON) {
+      return res.failure(
+        new InvalidSyntaxError(
+          pos_start,
+          this.current_tok.pos_end,
+          "Expected ':'",
+        ),
+      );
+    }
+
+    res.register_advancement();
+    this.advance();
+
+    let args = [];
+
+    args.push(res.register(this.expr()));
+    if (res.error) return res;
+
+    while (this.current_tok.type === TT_CONCAT) {
+      res.register_advancement();
+      this.advance();
+
+      if (this.current_tok.type === TT_NEWLINE) {
+        args.push(
+          new CharNode(
+            new Token(
+              TT_LETRA,
+              "\n",
+              this.current_tok.pos_start.copy(),
+              this.current_tok.pos_end.copy(),
+            ),
+          ),
+        );
+        res.register_advancement();
+        this.advance();
+      } else {
+        args.push(res.register(this.expr()));
+        if (res.error) return res;
+      }
+    }
+
+    return res.success(new PrintNode(pos_start, args));
+  };
 
   expr = () => {
     let res = new ParseResult();
@@ -864,9 +932,13 @@ class Parser {
         ),
       );
     }
-
     res.register_advancement();
     this.advance();
+
+    while (this.current_tok.type === TT_NEWLINE) {
+      res.register_advancement();
+      this.advance();
+    }
 
     if (this.current_tok.type !== TT_LBRACE) {
       return res.failure(

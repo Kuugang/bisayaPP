@@ -6,6 +6,8 @@ const TT_BOOLEAN = "TINUOD";
 const TT_SEMICOLON = "SEMICOLON";
 const TT_INCREMENT = "INCREMENT";
 const TT_DECREMENT = "DECREMENT";
+const TT_COLON = "COLON";
+const TT_CONCAT = "CONCAT";
 
 const TT_IDENTIFIER = "IDENTIFIER";
 const TT_KEYWORD = "KEYWORD";
@@ -51,6 +53,7 @@ const KEYWORDS = [
   "KUNG WALA", //ELSE
   "PUNDOK", // {} block of code
   "ALANG SA", //FOR LOOP
+  "IPAKITA", //PRINT
 ];
 
 const KEYWORD_PATTERN = new RegExp(
@@ -98,6 +101,8 @@ module.exports = {
   TT_SEMICOLON,
   TT_INCREMENT,
   TT_DECREMENT,
+  TT_COLON,
+  TT_CONCAT,
 
   TT_IDENTIFIER,
   TT_KEYWORD,

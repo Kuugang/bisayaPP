@@ -161,6 +161,13 @@ class BinaryOperationNode {
     return `(${this.left_node}, ${this.op_tok}, ${this.right_node})`;
   }
 }
+class PrintNode {
+  constructor(pos_start, arg_nodes) {
+    this.arg_nodes = arg_nodes;
+    this.pos_start = pos_start;
+    this.pos_end = arg_nodes[arg_nodes.length - 1].pos_end;
+  }
+}
 
 module.exports = {
   CallNode,
@@ -176,4 +183,5 @@ module.exports = {
   ForNode,
   ListNode,
   BinaryOperationNode,
+  PrintNode,
 };

@@ -111,6 +111,7 @@ class BuiltInFunction extends BaseFunction {
   }
 
   execute_print(exec_ctx) {
+    //process.stdout.write(String(exec_ctx.symbol_table.get("value")));
     console.log(String(exec_ctx.symbol_table.get("value")));
     return new RTResult().success(new Number(0));
   }
