@@ -54,6 +54,12 @@ const KEYWORDS = [
   "PUNDOK", // {} block of code
   "ALANG SA", //FOR LOOP
   "IPAKITA", //PRINT
+  "SAMTANG", //WHILE LOOP
+  "HUNONG", //BREAK,
+  "PADAYON", //CONTINUE
+  "IULI", //RETURN,
+  "WALA", //void
+  "LIHOK", //FUNCTION
 ];
 
 const KEYWORD_PATTERN = new RegExp(

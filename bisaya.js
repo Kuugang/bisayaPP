@@ -1,11 +1,10 @@
 const fs = require("fs");
+const { BuiltInFunction } = require("./Function.js");
 const { Lexer } = require("./Lexer.js");
 const { Parser } = require("./Parser.js");
 const { Interpreter } = require("./Interpreter.js");
 const { Context } = require("./Context.js");
-
 const { SymbolTable } = require("./SymbolTable.js");
-const { BuiltInFunction } = require("./Function.js");
 
 //const prompt = require("prompt-sync")();
 const args = process.argv;

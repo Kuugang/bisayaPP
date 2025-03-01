@@ -33,71 +33,8 @@ const {
 } = require("./Token.js");
 const { Char, String, Boolean, Number, List } = require("./Value.js");
 const { RTError, SemanticError } = require("./Error.js");
-const { NumberNode, StringNode } = require("./Node.js");
 const { Context } = require("./Context.js");
-const { SymbolTable } = require("./SymbolTable.js");
-
-class RTResult {
-  constructor() {
-    this.reset();
-  }
-
-  reset() {
-    this.value = null;
-    this.error = null;
-    this.func_return_value = null;
-    this.loop_should_continue = false;
-    this.loop_should_break = false;
-  }
-
-  register(res) {
-    this.error = res.error;
-    this.func_return_value = res.func_return_value;
-    this.loop_should_continue = res.loop_should_continue;
-    this.loop_should_break = res.loop_should_break;
-    return res.value;
-  }
-
-  success(value) {
-    this.reset();
-    this.value = value;
-    return this;
-  }
-
-  success_return(value) {
-    this.reset();
-    this.func_return_value = value;
-    return this;
-  }
-
-  success_continue() {
-    this.reset();
-    this.loop_should_continue = true;
-    return this;
-  }
-
-  success_break() {
-    this.reset();
-    this.loop_should_break = true;
-    return this;
-  }
-
-  failure(error) {
-    this.reset();
-    this.error = error;
-    return this;
-  }
-
-  should_return() {
-    // Note: this will allow you to continue and break outside the current function
-    return (
-      this.error ||
-      this.func_return_value ||
-      this.loop_should_continue ||
-      this.loop_should_break
-    );
-  }
-}
+const { RTResult } = require("./RTResult.js");
 
 class Interpreter {
   visit(node, context) {
@@ -256,6 +193,7 @@ class Interpreter {
     let res = new RTResult();
 
     res.register(this.visit(node.initialization_node, context));
+    if(res.error)return res
 
     let condition_node = res.register(this.visit(node.condition_node, context));
     if (res.should_return()) return res;
@@ -263,7 +201,6 @@ class Interpreter {
     while (true) {
       condition_node = res.register(this.visit(node.condition_node, context));
       if (res.should_return()) return res;
-
       if (condition_node.value === "DILI") {
         break;
       }
@@ -289,6 +226,34 @@ class Interpreter {
     return res.success(
       new Number(null),
     );
+  }
+
+  visit_WhileNode(node, context) {
+    let res = new RTResult();
+
+    while (true) {
+        let condition_node = res.register(this.visit(node.condition_node, context));
+
+        if (res.should_return()) return res;
+        if (condition_node.value === "DILI") {
+            break;
+        }
+    
+        res.register(this.visit(node.body_node, context));
+    
+        if (
+            res.should_return() &&
+            res.loop_should_continue == false &&
+            res.loop_should_break == false
+        ) {
+            return res;
+        }
+    
+        if (res.loop_should_continue) continue;
+    
+        if (res.loop_should_break) break;
+    }
+    return res.success(new Number(null));
   }
 
   visit_ListNode(node, context) {
@@ -437,7 +402,7 @@ class Interpreter {
       if (res.should_return()) return res;
     }
 
-    let return_value = res.register(value_to_call.execute(args));
+    let return_value = res.register(value_to_call.execute(args, context));
     if (res.should_return()) return res;
 
     return_value = return_value
@@ -465,14 +430,69 @@ class Interpreter {
     let res = new RTResult();
     let value = null;
 
-    let new_context = new Context("<block>", context, node.pos_start);
-    new_context.symbol_table = new SymbolTable(new_context.parent.symbol_table);
+    let new_context = new Context(node.name, context, node.pos_start);
+    new_context.symbol_table = context.symbol_table;
 
     for(let child of node.statements){
       value = res.register(this.visit(child, new_context));
       if(res.should_return()) return res;
     }
     return res.success(value);
+  }
+
+  visit_BreakNode(node, context){
+    if(context.display_name !== "<loop>"){
+        return new RTResult().failure(
+            new RTError(
+            node.pos_start,
+            node.pos_end,
+            "Break statement outside loop or switch",
+            context,
+            ),
+        );
+    }
+    return new RTResult().success_break();
+  }
+
+  visit_ContinueNode(node, context){
+    if(context.display_name !== "<loop>"){
+        return new RTResult().failure(
+            new RTError(
+            node.pos_start,
+            node.pos_end,
+            "Continue statement outside loop",
+            context,
+            ),
+        );
+    }
+    return new RTResult().success_continue();
+  }
+
+  visit_FuncDefNode(node, context){
+    let res = new RTResult();
+    let func_name = node.var_name_tok.value;
+    let body_node = node.body_node;
+    let args = node.args
+    let return_type = node.return_type
+
+    const { Function } = require("./Function.js");
+    let func_value = new Function(func_name, body_node, args, return_type).set_context(
+      context,
+    );
+
+    context.symbol_table.set(func_name, func_value);
+    return res.success(func_value);
+  }
+
+  visit_ReturnNode(node, context){
+    let res = new RTResult();
+    let value = null;
+    if(node.node_to_return){
+      value = res.register(this.visit(node.node_to_return, context));
+      if(res.should_return()) return res;
+    }
+
+    return res.success_return(value);
   }
 }
 

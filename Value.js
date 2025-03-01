@@ -1,5 +1,6 @@
 const { RTError } = require("./Error");
-const { TT_INT, TT_LETRA, TT_STRING, TT_BOOLEAN } = require("./Token");
+const { RTResult } = require("./RTResult"); 
+const { TT_LETRA, TT_STRING, TT_BOOLEAN } = require("./Token");
 
 class Value {
   constructor() {
@@ -254,7 +255,7 @@ class Number extends Value {
   divide(other) {
     if (other instanceof Number) {
       if (other.value == 0) {
-        return (
+        return [
           null,
           new RTError(
             other.pos_start,
@@ -262,7 +263,7 @@ class Number extends Value {
             "Division by zero",
             this.context,
           )
-        );
+        ];
       }
       return [
         new Number(this.value / other.value, this.type).set_context(
@@ -477,4 +478,5 @@ class List extends Value {
     return this.elements.map((x) => new String(x)).join(", ");
   }
 }
+
 module.exports = { Value, Char, String, Boolean, Number, List };

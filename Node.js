@@ -1,17 +1,5 @@
 const { Token, TT_IDENTIFIER } = require("./Token");
 
-class CallNode {
-  constructor(node_to_call, arg_nodes) {
-    this.node_to_call = node_to_call;
-    this.arg_nodes = arg_nodes;
-
-    this.pos_start = this.node_to_call.pos_start;
-
-    if (this.arg_nodes.length > 0)
-      this.pos_end = this.arg_nodes[this.arg_nodes.length - 1].pos_end;
-    else this.pos_end = this.node_to_call.pos_end;
-  }
-}
 
 class VarAssignNode {
   constructor(type = null, var_name_tok, value_node = null) {
@@ -125,6 +113,15 @@ class ForNode {
   }
 }
 
+class WhileNode{
+    constructor(condition_node, body_node){
+        this.condition_node = condition_node;
+        this.body_node = body_node;
+        this.pos_start = this.condition_node.pos_start;
+        this.pos_end = this.body_node.pos_end;
+    }
+}
+
 class ListNode {
   constructor(element_nodes, pos_start, pos_end) {
     this.element_nodes = element_nodes;
@@ -158,7 +155,7 @@ class PrintNode {
 }
 
 class Block{
-    constructor(statements, name, pos_start, pos_end){
+    constructor(statements, name = "<block>", pos_start, pos_end){
         this.statements = statements;
         this.name = name;
         this.pos_start = pos_start;
@@ -166,8 +163,55 @@ class Block{
     }
 }
 
+class BreakNode{
+    constructor(pos_start, pos_end){
+        this.pos_start = pos_start;
+        this.pos_end = pos_end;
+    }
+}
+class ContinueNode{
+    constructor(pos_start, pos_end){
+        this.pos_start = pos_start;
+        this.pos_end = pos_end;
+    }
+}
+
+
+
+class FuncDefNode{
+    constructor(var_name_tok, args, body_node, return_type){
+        this.var_name_tok = var_name_tok;
+        this.args = args;
+        this.body_node = body_node;
+        this.return_type = return_type;
+
+        this.pos_start = this.var_name_tok.pos_start;
+        this.pos_end = this.body_node.pos_end;
+    }
+}
+class CallNode {
+  constructor(node_to_call, arg_nodes) {
+    this.node_to_call = node_to_call;
+    this.arg_nodes = arg_nodes;
+
+    this.pos_start = this.node_to_call.pos_start;
+
+    if (this.arg_nodes.length > 0)
+      this.pos_end = this.arg_nodes[this.arg_nodes.length - 1].pos_end;
+    else this.pos_end = this.node_to_call.pos_end;
+  }
+}
+
+class ReturnNode{
+    constructor(node_to_return, pos_start, pos_end){
+        this.node_to_return = node_to_return;
+        this.pos_start = pos_start;
+        this.pos_end = pos_end;
+    }
+}
+
+
 module.exports = {
-  CallNode,
   VarAssignNode,
   VarAccessNode,
   CharNode,
@@ -177,8 +221,14 @@ module.exports = {
   UnaryOperationNode,
   PostfixOperationNode,
   ForNode,
+  WhileNode,
   ListNode,
   BinaryOperationNode,
   PrintNode,
-  Block
+  Block,
+  BreakNode,
+  ContinueNode,
+  FuncDefNode,
+  CallNode,
+  ReturnNode
 };

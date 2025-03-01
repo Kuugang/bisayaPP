@@ -70,6 +70,28 @@ class RTError extends Error {
     super(pos_start, pos_end, "Runtime Error", details);
     this.context = context;
   }
+
+
+  as_string(){
+    result  = this.generate_traceback()
+    result += `${this.error_name}: ${this.details}`
+    result += '\n\n' + string_with_arrows(this.pos_start.ftxt, this.pos_start, this.pos_end)
+    return result
+  }
+
+    generate_traceback(){
+
+    let result = "";
+    let pos = this.pos_start;
+    let ctx = this.context;
+    while (ctx) {
+      result = `  File ${pos.fn}, line ${pos.ln + 1}, in ${ctx.display_name}\n` + result;
+      pos = ctx.parent_entry_pos;
+      ctx = ctx.parent;
+    }
+
+    return "Traceback (most recent call last):\n" + result;
+    }
 }
 
 module.exports = {

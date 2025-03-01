@@ -1,8 +1,9 @@
-const { Value, Number } = require("./Value.js");
-const { Context } = require("./Context.js");
-const { RTResult } = require("./Interpreter.js");
-const { SymbolTable } = require("./SymbolTable.js");
-const { RTError } = require("./Error.js");
+const { Value, Number } = require("./Value");
+const { RTResult } = require("./RTResult");
+const {Interpreter} = require("./Interpreter");
+const { Context } = require("./Context");
+const { SymbolTable } = require("./SymbolTable");
+const { RTError } = require("./Error");
 class BaseFunction extends Value {
   constructor(name) {
     super();
@@ -39,6 +40,20 @@ class BaseFunction extends Value {
         ),
       );
     }
+
+    for (let i = 0; i < arg_names.length; i++) {
+        if(arg_names[i].type != args[i].type){
+            return res.failure(
+                new RTError(
+                    args[i].pos_start,
+                    args[i].pos_end,
+                    `Expected ${arg_names[i].type} but got ${args[i].type}`,
+                    this.context,
+                ),
+            );
+        }
+    }
+
     for (let i = 0; i < arg_names.length; i++) {
       if (args[i] == null) {
         return res.failure(
@@ -57,7 +72,7 @@ class BaseFunction extends Value {
 
   populate_args(arg_names, args, exec_ctx) {
     for (let i = 0; i < args.length; i++) {
-      let arg_name = arg_names[i];
+      let arg_name = arg_names[i].name.value;
       let arg_value = args[i];
       arg_value.set_context(exec_ctx);
       exec_ctx.symbol_table.set(arg_name, arg_value);
@@ -117,7 +132,65 @@ class BuiltInFunction extends BaseFunction {
   }
 }
 
+
+class Function extends BaseFunction{
+  constructor(name, body_node, args, return_type) {
+    super(name)
+    this.body_node = body_node
+    this.args = args
+    this.return_type = return_type
+  }
+
+  execute(args, context) {
+    let res = new RTResult();
+    let interpreter = new Interpreter();
+    //let exec_ctx = this.generate_new_context();
+
+    res.register(this.check_and_populate_args(this.args, args, context));
+    if (res.should_return()) return res;
+
+    let value = res.register(interpreter.visit(this.body_node, context));
+    if (res.should_return() && res.func_return_value === null) return res;
+
+    if(!this.return_type && res.func_return_value.type){
+        return res.failure(
+            new RTError(
+                this.pos_start,
+                this.pos_end,
+                `return-statement with a value, in function returning 'void'`,
+                this.context,
+            ),
+        );
+    }
+
+    if(this.return_type && res.func_return_value && this.return_type != res.func_return_value.type){
+        return res.failure(
+            new RTError(
+                this.pos_start,
+                this.pos_end,
+                `Expected return type of ${this.return_type} but got ${res.func_return_value.type}`,
+                this.context,
+            ),
+        );
+    }
+    
+    let retValue = res.func_return_value || new Number(0);
+    return res.success(retValue);
+  }
+
+  copy() {
+    let copy = new Function(this.name, this.body_node, this.args, this.return_type);
+    copy.set_context(this.context);
+    copy.set_pos(this.pos_start, this.pos_end);
+    return copy;
+  }
+
+  toString() {
+    return `<function ${this.name}>`;
+  }
+}
+
 BuiltInFunction.prototype.execute_print.arg_names = ["value"];
 BuiltInFunction.print = new BuiltInFunction("print");
 
-module.exports = { BuiltInFunction };
+module.exports = { BuiltInFunction, Function };
