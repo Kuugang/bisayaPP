@@ -1,0 +1,15 @@
+SUGOD
+    MUGNA NUMERO n=10, a=0, b=1, temp, ctr
+    ALANG SA (ctr=1; ctr<=n; ctr++)
+    PUNDOK{
+        IPAKITA: a & ' '
+        temp = a + b
+        a = b
+        b = temp
+    }
+
+    MUGNA NUMERO a = 1
+    
+    a = 2
+
+KATAPUSAN

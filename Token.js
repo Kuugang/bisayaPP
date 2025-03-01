@@ -85,10 +85,6 @@ class Token {
     }
     return this.type + ": ";
   }
-  isDataType() {
-    let types = ["NUMERO", "TIPIK", "LETRA", "TINUOD"];
-    return types.includes(this.value) && this.type === TT_KEYWORD;
-  }
 }
 
 module.exports = {

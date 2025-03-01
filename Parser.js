@@ -10,10 +10,10 @@ const {
   UnaryOperationNode,
   ListNode,
   BinaryOperationNode,
-  VarReassignNode,
   ForNode,
   PostfixOperationNode,
   PrintNode,
+  Block,
 } = require("./Node.js");
 const {
   Token,
@@ -157,11 +157,29 @@ class Parser {
     }
 
     res = this.statements();
+    if(res.error)return res
+
+    while(this.current_tok.type === TT_NEWLINE){
+        this.advance()
+    }
+
+    if(!this.current_tok.matches(TT_KEYWORD, "KATAPUSAN")){
+        return res.failure(
+            new InvalidSyntaxError(
+                this.current_tok.pos_start,
+                this.current_tok.pos_end,
+                "Expected 'KATAPUSAN'"
+            )
+        )
+    }
+    this.advance()
+
+    while(this.current_tok.type === TT_NEWLINE){
+        this.advance()
+    }
 
     if (
-      !res.error &&
-      this.current_tok.type !== TT_EOF &&
-      !this.current_tok.matches(TT_KEYWORD, "KATAPUSAN")
+      this.current_tok.type !== TT_EOF
     ) {
       return res.failure(
         new InvalidSyntaxError(
@@ -202,7 +220,7 @@ class Parser {
 
       if (newline_count === 0) more_statements = false;
       if (!more_statements) break;
-      if (this.current_tok.matches(TT_KEYWORD, "KATAPUSAN")) {
+      if (this.current_tok.matches(TT_KEYWORD, "KATAPUSAN") || this.current_tok.type == TT_EOF) {
         break;
       }
 
@@ -257,7 +275,6 @@ class Parser {
     }
 
     let expr = res.register(this.expr());
-
     if (res.error) {
       return res.failure(
         new InvalidSyntaxError(
@@ -304,28 +321,12 @@ class Parser {
 
     args.push(res.register(this.expr()));
     if (res.error) return res;
-
     while (this.current_tok.type === TT_CONCAT) {
-      res.register_advancement();
-      this.advance();
-
-      if (this.current_tok.type === TT_NEWLINE) {
-        args.push(
-          new CharNode(
-            new Token(
-              TT_LETRA,
-              "\n",
-              this.current_tok.pos_start.copy(),
-              this.current_tok.pos_end.copy(),
-            ),
-          ),
-        );
         res.register_advancement();
         this.advance();
-      } else {
+
         args.push(res.register(this.expr()));
         if (res.error) return res;
-      }
     }
 
     return res.success(new PrintNode(pos_start, args));
@@ -403,14 +404,14 @@ class Parser {
         break;
     }
 
-    if (!this.current_tok.isDataType()) {
-      return res.failure(
-        new InvalidSyntaxError(
-          this.current_tok.pos_start,
-          this.current_tok.pos_end,
-          "Expected 'NUMERO', 'TIPIK', 'LETRA', 'TINUOD'",
-        ),
-      );
+    if(!["NUMERO", "TIPIK", "LETRA", "TINUOD"].includes(this.current_tok.value)){
+        return res.failure(
+            new InvalidSyntaxError(
+                this.current_tok.pos_start,
+                this.current_tok.pos_end,
+                "Expected 'NUMERO', 'TIPIK', 'LETRA', 'TINUOD'"
+            )
+        )
     }
 
     res.register_advancement();
@@ -427,12 +428,16 @@ class Parser {
     }
 
     let var_name = this.current_tok;
-    let pos_start = this.current_tok.pos_start.copy();
     res.register_advancement();
     this.advance();
+    
+    return this.var_assign(var_name, type)    
+  };
 
+  var_assign = (var_name, type = null) => {
+    let res = new ParseResult();
     let toks = [var_name];
-    let value;
+    let value = null;
 
     while (this.current_tok.type === TT_EQ) {
       res.register_advancement();
@@ -456,18 +461,20 @@ class Parser {
           );
         }
       }
+
       toks.push(value.var_name_tok);
     }
 
     if (this.current_tok.type !== TT_COMMA) {
       return res.success(new VarAssignNode(type, var_name, value));
     }
+
     let nodes = [];
 
     nodes.push(new VarAssignNode(type, var_name, value));
 
     for (let i = 1; i < toks.length - 1; i++) {
-      nodes.push(new VarReassignNode(toks[i], value));
+      nodes.push(new VarAssignNode(type, toks[i], value));
     }
 
     while (this.current_tok.type === TT_COMMA) {
@@ -518,107 +525,7 @@ class Parser {
       nodes.push(new VarAssignNode(type, var_name, value));
 
       for (let i = 1; i < toks.length - 1; i++) {
-        nodes.push(new VarReassignNode(toks[i], value));
-      }
-    }
-
-    return res.success(
-      new ListNode(nodes, pos_start, this.current_tok.pos_end.copy()),
-    );
-  };
-
-  var_assign = (var_name) => {
-    let res = new ParseResult();
-    let toks = [var_name];
-    let value = null;
-
-    while (this.current_tok.type === TT_EQ) {
-      res.register_advancement();
-      this.advance();
-
-      value = res.register(this.expr());
-      if (res.error) return res;
-
-      if (
-        value instanceof BinaryOperationNode ||
-        value instanceof NumberNode ||
-        value instanceof BooleanNode
-      ) {
-        if (this.current_tok.type === TT_EQ) {
-          return res.failure(
-            new SemanticError(
-              value.pos_start,
-              value.pos_end,
-              "lvalue required as left operand of assignment",
-            ),
-          );
-        }
-      }
-
-      toks.push(value.var_name_tok);
-    }
-
-    if (this.current_tok.type !== TT_COMMA) {
-      return res.success(new VarReassignNode(var_name, value));
-    }
-
-    let nodes = [];
-
-    nodes.push(new VarReassignNode(var_name, value));
-
-    for (let i = 1; i < toks.length - 1; i++) {
-      nodes.push(new VarReassignNode(toks[i], value));
-    }
-
-    while (this.current_tok.type === TT_COMMA) {
-      res.register_advancement();
-      this.advance();
-
-      if (this.current_tok.type != TT_IDENTIFIER) {
-        return res.failure(
-          new InvalidSyntaxError(
-            this.current_tok.pos_start,
-            this.current_tok.pos_end,
-            "Expected identifier",
-          ),
-        );
-      }
-
-      var_name = this.current_tok;
-      res.register_advancement();
-      this.advance();
-
-      let toks = [var_name];
-      let value;
-
-      while (this.current_tok.type === TT_EQ) {
-        res.register_advancement();
-        this.advance();
-
-        value = res.register(this.expr());
-        if (res.error) return res;
-
-        if (
-          value instanceof BinaryOperationNode ||
-          value instanceof NumberNode
-        ) {
-          if (this.current_tok.type === TT_EQ) {
-            return res.failure(
-              new SemanticError(
-                value.pos_start,
-                value.pos_end,
-                "lvalue required as left operand of assignment",
-              ),
-            );
-          }
-        }
-        toks.push(value.var_name_tok);
-      }
-
-      nodes.push(new VarReassignNode(var_name, value));
-
-      for (let i = 1; i < toks.length - 1; i++) {
-        nodes.push(new VarReassignNode(toks[i], value));
+        nodes.push(new VarAssignNode(type, toks[i], value));
       }
     }
 
@@ -807,6 +714,17 @@ class Parser {
       let for_expr = res.register(this.for_expr());
       if (res.error) return res;
       return res.success(for_expr);
+    } else if(tok.type == TT_NEWLINE && tok.value == "$"){
+        res.register_advancement();
+        this.advance();
+        return res.success(new CharNode(
+          new Token(
+            TT_LETRA,
+            "\n",
+            tok.pos_start.copy(),
+            tok.pos_end.copy(),
+          ))
+        )
     }
 
     return res.failure(
@@ -953,6 +871,11 @@ class Parser {
     res.register_advancement();
     this.advance();
 
+    while (this.current_tok.type === TT_NEWLINE) {
+      res.register_advancement();
+      this.advance();
+    }
+
     if (this.current_tok.type === TT_RBRACE) {
       res.register_advancement();
       this.advance();
@@ -1001,7 +924,6 @@ class Parser {
 
       statements.push(statement);
     }
-
     if (this.current_tok.type !== TT_RBRACE) {
       return res.failure(
         new InvalidSyntaxError(
@@ -1016,7 +938,7 @@ class Parser {
     this.advance();
 
     return res.success(
-      new ListNode(statements, pos_start, this.current_tok.pos_end.copy()),
+      new Block(statements, pos_start, this.current_tok.pos_end.copy()),
     );
   }
 

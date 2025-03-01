@@ -68,7 +68,7 @@ class Lexer {
       } else if (/^[0-9]$/.test(this.current_char)) {
         tokens.push(this.make_number());
       } else if (/^\$|\n$/.test(this.current_char)) {
-        tokens.push(new Token(TT_NEWLINE, null, this.pos, null));
+        tokens.push(new Token(TT_NEWLINE, this.current_char, this.pos, null));
         this.advance();
       } else if (this.current_char == ";") {
         tokens.push(new Token(TT_SEMICOLON, null, this.pos, null));
@@ -151,17 +151,14 @@ class Lexer {
   make_escaped() {
     let pos_start = this.pos.copy();
     this.advance();
-    let char;
+    let char = this.current_char;
 
+    this.advance();
     if (this.current_char !== "]") {
-      char = this.current_char;
-      this.advance();
-      if (this.current_char !== "]") {
-        return [
-          null,
-          new InvalidSyntaxError(pos_start, this.pos, "Expected character"),
-        ];
-      }
+      return [
+        null,
+        new InvalidSyntaxError(pos_start, this.pos, "Expected character"),
+      ];
     }
 
     this.advance();

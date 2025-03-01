@@ -84,7 +84,7 @@ class Value {
     return new RTError(
       this.pos_start,
       other.pos_end,
-      "Illegal operation",
+      `Illegal operation, ${this.type} and ${other.type}`,
       this.context,
     );
   }
@@ -136,11 +136,18 @@ class Boolean extends Value {
     super();
     this.value = value;
     this.type = TT_BOOLEAN;
-    this.num_value = value === "OO" ? 1 : 0;
+
+    if (typeof value === "string") {
+        this.num_value = value === "OO" ? 1 : 0;
+    } else{
+        this.num_value = value;
+        this.value = value === 1 ? "OO" : "DILI";
+    }
+
   }
 
   and(other) {
-    if (other instanceof Boolean) {
+    if (other instanceof Boolean || other instanceof Number) {
       return [
         new Boolean(this.num_value && other.num_value === 1 ? "OO" : "DILI"),
         null,
@@ -151,7 +158,7 @@ class Boolean extends Value {
   }
 
   or(other) {
-    if (other instanceof Boolean) {
+    if (other instanceof Boolean|| other instanceof Number) {
       return [
         new Boolean(this.num_value || other.num_value === 1 ? "OO" : "DILI"),
         null,
@@ -283,15 +290,15 @@ class Number extends Value {
 
   notted() {
     return [
-      new Number(this.value == 0 ? 1 : 0, this.type).set_context(this.context),
+      new Boolean(this.value == 0 ? 1 : 0, this.type).set_context(this.context),
       null,
     ];
   }
 
   gt(other) {
-    if (other instanceof Number) {
+    if (other instanceof Number || other instanceof Boolean) {
       return [
-        new Number(this.value > other.value ? 1 : 0, this.type).set_context(
+        new Boolean(this.value > other.value ? 1 : 0, this.type).set_context(
           this.context,
         ),
         null,
@@ -302,9 +309,9 @@ class Number extends Value {
   }
 
   lt(other) {
-    if (other instanceof Number) {
+    if (other instanceof Number || other instanceof Boolean) {
       return [
-        new Number(this.value < other.value ? 1 : 0, this.type).set_context(
+        new Boolean(this.value < other.value ? 1 : 0, this.type).set_context(
           this.context,
         ),
         null,
@@ -315,9 +322,9 @@ class Number extends Value {
   }
 
   gte(other) {
-    if (other instanceof Number) {
+    if (other instanceof Number || other instanceof Boolean) {
       return [
-        new Number(this.value >= other.value ? 1 : 0, this.type).set_context(
+        new Boolean(this.value >= other.value ? 1 : 0, this.type).set_context(
           this.context,
         ),
         null,
@@ -328,9 +335,9 @@ class Number extends Value {
   }
 
   lte(other) {
-    if (other instanceof Number) {
+    if (other instanceof Number || other instanceof Boolean) {
       return [
-        new Number(this.value <= other.value ? 1 : 0, this.type).set_context(
+        new Boolean(this.value <= other.value ? 1 : 0, this.type).set_context(
           this.context,
         ),
         null,
@@ -342,7 +349,7 @@ class Number extends Value {
 
   eq(other) {
     return [
-      new Number(this.value === other.value ? 1 : 0, this.type).set_context(
+      new Boolean(this.value === other.value ? 1 : 0, this.type).set_context(
         this.context,
       ),
       null,
@@ -351,7 +358,7 @@ class Number extends Value {
 
   ne(other) {
     return [
-      new Number(this.value !== other.value ? 1 : 0, this.type).set_context(
+      new Boolean(this.value !== other.value ? 1 : 0, this.type).set_context(
         this.context,
       ),
       null,
@@ -359,9 +366,9 @@ class Number extends Value {
   }
 
   or(other) {
-    if (other instanceof Number) {
+    if (other instanceof Number || other instanceof Boolean) {
       return [
-        new Number(this.value || other.value, this.type).set_context(
+        new Boolean(this.value || other.value, this.type).set_context(
           this.context,
         ),
         null,
@@ -372,9 +379,9 @@ class Number extends Value {
   }
 
   and(other) {
-    if (other instanceof Number) {
+    if (other instanceof Number || other instanceof Boolean) {
       return [
-        new Number(this.value && other.value, this.type).set_context(
+        new Boolean(this.value && other.value, this.type).set_context(
           this.context,
         ),
         null,

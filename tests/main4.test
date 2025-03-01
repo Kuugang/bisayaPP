@@ -1,0 +1,6 @@
+SUGOD
+    MUGNA NUMERO ctr = 1, a, b
+    ALANG SA(ctr = 1, a = 2, b = 3; ctr <= 10 UG a == 2; ctr++)PUNDOK{
+        IPAKITA: ctr & " "
+    }
+KATAPUSAN

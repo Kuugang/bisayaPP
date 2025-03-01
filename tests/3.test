@@ -1,0 +1,12 @@
+SUGOD
+    IPAKITA: 1 > 2 & $
+    IPAKITA: 1 < 2 & $
+    IPAKITA: 1 >= 2 & $
+    IPAKITA: 1 <= 2 & $
+    IPAKITA: 2 >= 2 & $
+    IPAKITA: 2 <= 2 & $
+    IPAKITA: 2.5 == 2.5 & $
+    IPAKITA: 2.5 <> 2.5 & $
+    IPAKITA: 2.0 == 2 & $
+    IPAKITA: 2 == '2' & $
+KATAPUSAN

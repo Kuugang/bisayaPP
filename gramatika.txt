@@ -5,7 +5,10 @@ statements  : NEWLINE* statement ((NEWLINE)+ statement)* NEWLINE*
 statement   : KEYWORD: RETURN expr?
             | KEYWORD: CONTINUE
             | KEYWORD: BREAK
+            | print_statement
             | expr
+
+print_statement: KEYWORD:IPAKITA expr (& expr)* 
 
 expr        : compr-expr ((KEYWORD:AND|KEYWORD:OR) compr-expr)*  
             | var-def

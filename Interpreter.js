@@ -33,7 +33,9 @@ const {
 } = require("./Token.js");
 const { Char, String, Boolean, Number, List } = require("./Value.js");
 const { RTError, SemanticError } = require("./Error.js");
-const { NumberNode } = require("./Node.js");
+const { NumberNode, StringNode } = require("./Node.js");
+const { Context } = require("./Context.js");
+const { SymbolTable } = require("./SymbolTable.js");
 
 class RTResult {
   constructor() {
@@ -128,9 +130,9 @@ class Interpreter {
 
   visit_BooleanNode(node, context) {
     let value;
-    if (node.tok.value === "OO") {
+    if (node.tok.value == "OO") {
       value = "OO";
-    } else if (node.tok.value === "DILI") {
+    } else if (node.tok.value == "DILI") {
       value = "DILI";
     }
 
@@ -252,7 +254,6 @@ class Interpreter {
 
   visit_ForNode(node, context) {
     let res = new RTResult();
-    let elements = [];
 
     res.register(this.visit(node.initialization_node, context));
 
@@ -263,11 +264,12 @@ class Interpreter {
       condition_node = res.register(this.visit(node.condition_node, context));
       if (res.should_return()) return res;
 
-      if (condition_node.value === 0) {
+      if (condition_node.value === "DILI") {
         break;
       }
 
-      let value = res.register(this.visit(node.body_node, context));
+      res.register(this.visit(node.body_node, context));
+
       if (
         res.should_return() &&
         res.loop_should_continue == false &&
@@ -280,18 +282,12 @@ class Interpreter {
 
       if (res.loop_should_break) break;
 
-      elements.push(value);
-
       res.register(this.visit(node.update_node, context));
       if (res.should_return()) return res;
     }
 
     return res.success(
       new Number(null),
-      // Number.null if node.should_return_null else
-      new List(elements)
-        .set_context(context)
-        .set_pos(node.pos_start, node.pos_end),
     );
   }
 
@@ -317,21 +313,46 @@ class Interpreter {
     let var_name = node.var_name_tok.value;
     let variable = context.symbol_table.get(var_name);
 
-    if (variable !== null) {
-      return res.failure(
-        new RTError(
-          variable.pos_start,
-          variable.pos_end,
-          `Variable '${var_name}' is previously defined here`,
-          context,
-        ),
-      );
+    if(variable === null && node.type === null){
+        return res.failure(
+            new RTError(
+                node.pos_start,
+                node.pos_end,
+                `Variable '${var_name}' is not defined`,
+                context,
+            ),
+        );
+    }
+
+    if (variable && node.type !== null && context === variable.context) {
+        return res.failure(
+          new RTError(
+            variable.pos_start,
+            variable.pos_end,
+            `Variable '${var_name}' is previously defined here`,
+            context,
+          ),
+        );
     }
 
     let value = null;
     if (node.value_node) {
       value = res.register(this.visit(node.value_node, context));
       if (res.should_return()) return res;
+
+      if(node.type === TT_BOOLEAN){
+        if(value.value !== "OO" && value.value !== "DILI"){
+          return res.failure(
+            new SemanticError(
+              value.pos_start,
+              value.pos_end,
+              `Expected ${node.type} received ${value.type}`,
+              context,
+            ),
+          );
+        }
+        value = new Boolean(value.value);
+      }
 
       if (
         [TT_FLOAT, TT_INT].includes(node.type) &&
@@ -378,46 +399,6 @@ class Interpreter {
 
     context.symbol_table.set(var_name, value);
     return res.success(value);
-  }
-
-  visit_VarReassignNode(node, context) {
-    let res = new RTResult();
-    let var_name = node.var_name_tok.value;
-
-    let old_value = context.symbol_table.get(var_name);
-
-    if (!old_value) {
-      return res.failure(
-        new RTError(
-          node.pos_start,
-          node.pos_end,
-          `'${var_name}' is not defined`,
-          context,
-        ),
-      );
-    }
-
-    let new_value = res.register(this.visit(node.value_node, context));
-    if (res.should_return()) return res;
-    if (old_value.type !== new_value.type) {
-      return res.failure(
-        new RTError(
-          node.pos_start,
-          node.pos_end,
-          `Expected ${old_value.type} received ${new_value.type}`,
-          context,
-        ),
-      );
-    }
-
-    context.symbol_table.set(var_name, new_value);
-
-    new_value = new_value
-      .copy()
-      .set_pos(old_value.pos_start, old_value.pos_end)
-      .set_context(context);
-
-    return res.success(new_value);
   }
 
   visit_VarAccessNode(node, context) {
@@ -478,6 +459,20 @@ class Interpreter {
     value += "\0";
     process.stdout.write(value);
     return res.success(new Number(0));
+  }
+
+  visit_Block(node, context){
+    let res = new RTResult();
+    let value = null;
+
+    let new_context = new Context("<block>", context, node.pos_start);
+    new_context.symbol_table = new SymbolTable(new_context.parent.symbol_table);
+
+    for(let child of node.statements){
+      value = res.register(this.visit(child, new_context));
+      if(res.should_return()) return res;
+    }
+    return res.success(value);
   }
 }
 

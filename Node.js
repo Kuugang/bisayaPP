@@ -13,20 +13,8 @@ class CallNode {
   }
 }
 
-class VarReassignNode {
-  constructor(var_name_tok, value_node = null) {
-    this.var_name_tok = var_name_tok;
-    this.value_node = value_node;
-
-    this.pos_start = this.var_name_tok.pos_start;
-    this.pos_end = value_node
-      ? this.value_node.pos_end
-      : this.var_name_tok.pos_end;
-  }
-}
-
 class VarAssignNode {
-  constructor(type, var_name_tok, value_node = null) {
+  constructor(type = null, var_name_tok, value_node = null) {
     this.type = type;
     this.var_name_tok = var_name_tok;
     this.value_node = value_node;
@@ -169,11 +157,19 @@ class PrintNode {
   }
 }
 
+class Block{
+    constructor(statements, name, pos_start, pos_end){
+        this.statements = statements;
+        this.name = name;
+        this.pos_start = pos_start;
+        this.pos_end = pos_end;
+    }
+}
+
 module.exports = {
   CallNode,
   VarAssignNode,
   VarAccessNode,
-  VarReassignNode,
   CharNode,
   StringNode,
   BooleanNode,
@@ -184,4 +180,5 @@ module.exports = {
   ListNode,
   BinaryOperationNode,
   PrintNode,
+  Block
 };

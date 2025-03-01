@@ -7,7 +7,7 @@ const { Context } = require("./Context.js");
 const { SymbolTable } = require("./SymbolTable.js");
 const { BuiltInFunction } = require("./Function.js");
 
-const prompt = require("prompt-sync")();
+//const prompt = require("prompt-sync")();
 const args = process.argv;
 
 if (args[2] === undefined) {
