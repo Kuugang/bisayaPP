@@ -19,6 +19,7 @@ const {
   ContinueNode,
   FuncDefNode,
   ReturnNode,
+  InputNode,
 } = require("./Node.js");
 const {
   Token,
@@ -112,10 +113,10 @@ class Parser {
     this.advance();
   }
 
-  peek(count){
-    let idx = this.tok_idx + count
-    if(idx < 0 || idx >= this.tokens.length) return null
-    return this.tokens[idx]
+  peek(count) {
+    let idx = this.tok_idx + count;
+    if (idx < 0 || idx >= this.tokens.length) return null;
+    return this.tokens[idx];
   }
 
   advance() {
@@ -168,30 +169,28 @@ class Parser {
     }
 
     res = this.statements();
-    if(res.error)return res
+    if (res.error) return res;
 
-    while(this.current_tok.type === TT_NEWLINE){
-        this.advance()
+    while (this.current_tok.type === TT_NEWLINE) {
+      this.advance();
     }
 
-    if(!this.current_tok.matches(TT_KEYWORD, "KATAPUSAN")){
-        return res.failure(
-            new InvalidSyntaxError(
-                this.current_tok.pos_start,
-                this.current_tok.pos_end,
-                "Expected 'KATAPUSAN'"
-            )
-        )
+    if (!this.current_tok.matches(TT_KEYWORD, "KATAPUSAN")) {
+      return res.failure(
+        new InvalidSyntaxError(
+          this.current_tok.pos_start,
+          this.current_tok.pos_end,
+          "Expected 'KATAPUSAN'",
+        ),
+      );
     }
-    this.advance()
+    this.advance();
 
-    while(this.current_tok.type === TT_NEWLINE){
-        this.advance()
+    while (this.current_tok.type === TT_NEWLINE) {
+      this.advance();
     }
 
-    if (
-      this.current_tok.type !== TT_EOF
-    ) {
+    if (this.current_tok.type !== TT_EOF) {
       return res.failure(
         new InvalidSyntaxError(
           this.current_tok.pos_start,
@@ -231,7 +230,10 @@ class Parser {
 
       if (newline_count === 0) more_statements = false;
       if (!more_statements) break;
-      if (this.current_tok.matches(TT_KEYWORD, "KATAPUSAN") || this.current_tok.type == TT_EOF) {
+      if (
+        this.current_tok.matches(TT_KEYWORD, "KATAPUSAN") ||
+        this.current_tok.type == TT_EOF
+      ) {
         break;
       }
 
@@ -286,13 +288,18 @@ class Parser {
       return res.success(print_statement);
     }
 
+    if (this.current_tok.matches(TT_KEYWORD, "DAWAT")) {
+      let input_statement = res.register(this.input_statement());
+      return res.success(input_statement);
+    }
+
     let expr = res.register(this.expr());
     if (res.error) {
       return res.failure(
         new InvalidSyntaxError(
           this.current_tok.pos_start,
           this.current_tok.pos_end,
-          "Expected 'RETURN', 'CONTINUE', 'BREAK', 'VAR', 'IF', 'FOR', 'WHILE', 'FUN', int, float, identifier, '+', '-', '(', '[' or 'NOT'",
+          "Expected 'DAWAT, 'IPAKITA', 'IULI', 'PADAYON', 'HUNONG', 'MUGNA', 'KUNG', 'ALANG SA', 'SAMTANG', 'LIHOK', int, float, identifier, '+', '-', '(', '[' or 'NOT'",
         ),
       );
     }
@@ -334,15 +341,82 @@ class Parser {
     args.push(res.register(this.expr()));
     if (res.error) return res;
     while (this.current_tok.type === TT_CONCAT) {
-        res.register_advancement();
-        this.advance();
+      res.register_advancement();
+      this.advance();
 
-        args.push(res.register(this.expr()));
-        if (res.error) return res;
+      args.push(res.register(this.expr()));
+      if (res.error) return res;
     }
 
     return res.success(new PrintNode(pos_start, args));
   };
+
+  input_statement() {
+    let res = new ParseResult();
+    let pos_start = this.current_tok.pos_start.copy();
+
+    if (this.current_tok.matches(TT_KEYWORD, "DAWWAT")) {
+      return res.failure(
+        new InvalidSyntaxError(
+          pos_start,
+          this.current_tok.pos_end,
+          "Expected 'DAWAT'",
+        ),
+      );
+    }
+
+    res.register_advancement();
+    this.advance();
+
+    if (this.current_tok.type !== TT_COLON) {
+      return res.failure(
+        new InvalidSyntaxError(
+          pos_start,
+          this.current_tok.pos_end,
+          "Expected ':'",
+        ),
+      );
+    }
+
+    res.register_advancement();
+    this.advance();
+
+    let vars_toks = [];
+
+    if (this.current_tok.type !== TT_IDENTIFIER) {
+      return res.failure(
+        new InvalidSyntaxError(
+          pos_start,
+          this.current_tok.pos_end,
+          "Expected identifier",
+        ),
+      );
+    }
+
+    vars_toks.push(this.current_tok);
+    res.register_advancement();
+    this.advance();
+    while (this.current_tok.type === TT_COMMA) {
+      res.register_advancement();
+      this.advance();
+
+      if (this.current_tok.type !== TT_IDENTIFIER) {
+        return res.failure(
+          new InvalidSyntaxError(
+            pos_start,
+            this.current_tok.pos_end,
+            "Expected identifier",
+          ),
+        );
+      }
+
+      vars_toks.push(this.current_tok);
+      res.register_advancement();
+      this.advance();
+    }
+
+    return res.success(new InputNode(pos_start, vars_toks));
+  }
 
   expr = () => {
     let res = new ParseResult();
@@ -414,16 +488,23 @@ class Parser {
       case "TINUOD":
         type = TT_BOOLEAN;
         break;
+      case "PULONG":
+        type = TT_STRING;
+        break;
     }
 
-    if(!["NUMERO", "TIPIK", "LETRA", "TINUOD"].includes(this.current_tok.value)){
-        return res.failure(
-            new InvalidSyntaxError(
-                this.current_tok.pos_start,
-                this.current_tok.pos_end,
-                "Expected 'NUMERO', 'TIPIK', 'LETRA', 'TINUOD'"
-            )
-        )
+    if (
+      !["NUMERO", "TIPIK", "LETRA", "PULONG", "TINUOD"].includes(
+        this.current_tok.value,
+      )
+    ) {
+      return res.failure(
+        new InvalidSyntaxError(
+          this.current_tok.pos_start,
+          this.current_tok.pos_end,
+          "Expected 'NUMERO', 'TIPIK', 'LETRA', 'PULONG', 'TINUOD'",
+        ),
+      );
     }
 
     res.register_advancement();
@@ -442,8 +523,8 @@ class Parser {
     let var_name = this.current_tok;
     res.register_advancement();
     this.advance();
-    
-    return this.var_assign(var_name, type, count)    
+
+    return this.var_assign(var_name, type, count);
   };
 
   var_assign = (var_name, type = null, count = null) => {
@@ -490,8 +571,7 @@ class Parser {
     }
 
     while (this.current_tok.type === TT_COMMA) {
-        if(nodes.length === count)
-            break
+      if (nodes.length === count) break;
       res.register_advancement();
       this.advance();
 
@@ -513,8 +593,7 @@ class Parser {
       let value;
 
       while (this.current_tok.type === TT_EQ) {
-        if(nodes.length === count)
-            break
+        if (nodes.length === count) break;
         res.register_advancement();
         this.advance();
 
@@ -632,7 +711,7 @@ class Parser {
       res.register_advancement();
       this.advance();
       let arg_nodes = [];
-      
+
       if (this.current_tok.type == TT_RPAREN) {
         res.register_advancement();
         this.advance();
@@ -730,25 +809,22 @@ class Parser {
       let for_expr = res.register(this.for_expr());
       if (res.error) return res;
       return res.success(for_expr);
-    } else if(tok.matches(TT_KEYWORD, "SAMTANG")){
+    } else if (tok.matches(TT_KEYWORD, "SAMTANG")) {
       let for_expr = res.register(this.while_expr());
       if (res.error) return res;
       return res.success(for_expr);
-    } else if(tok.matches(TT_KEYWORD, "LIHOK")){ 
-        let func_def = res.register(this.func_def());
-        if(res.error) return res;
-        return res.success(func_def) 
-    }else if(tok.type == TT_NEWLINE && tok.value == "$"){
-        res.register_advancement();
-        this.advance();
-        return res.success(new CharNode(
-          new Token(
-            TT_LETRA,
-            "\n",
-            tok.pos_start.copy(),
-            tok.pos_end.copy(),
-          ))
-        )
+    } else if (tok.matches(TT_KEYWORD, "LIHOK")) {
+      let func_def = res.register(this.func_def());
+      if (res.error) return res;
+      return res.success(func_def);
+    } else if (tok.type == TT_NEWLINE && tok.value == "$") {
+      res.register_advancement();
+      this.advance();
+      return res.success(
+        new CharNode(
+          new Token(TT_LETRA, "\n", tok.pos_start.copy(), tok.pos_end.copy()),
+        ),
+      );
     }
 
     return res.failure(
@@ -788,21 +864,20 @@ class Parser {
     res.register_advancement();
     this.advance();
 
-
     let init_node;
-    if(this.current_tok.matches(TT_KEYWORD, "MUGNA")){
-        init_node = res.register(this.var_def(1));
-        if (res.error) return res;
-    }else if(this.peek(1).type === TT_EQ){
-        let var_name = this.current_tok;
-        res.register_advancement();
-        this.advance();
+    if (this.current_tok.matches(TT_KEYWORD, "MUGNA")) {
+      init_node = res.register(this.var_def(1));
+      if (res.error) return res;
+    } else if (this.peek(1).type === TT_EQ) {
+      let var_name = this.current_tok;
+      res.register_advancement();
+      this.advance();
 
-        init_node = res.register(this.var_assign(var_name, null, 1));
-        if (res.error) return res;
-    }else{
-        init_node = res.register(this.expr());
-        if (res.error) return res 
+      init_node = res.register(this.var_assign(var_name, null, 1));
+      if (res.error) return res;
+    } else {
+      init_node = res.register(this.expr());
+      if (res.error) return res;
     }
 
     if (!init_node) {
@@ -866,11 +941,10 @@ class Parser {
     return res.success(
       new ForNode(init_node, condition_node, update_node, body, false),
     );
-
   };
 
-  while_expr(){
-    let res = new  ParseResult()
+  while_expr() {
+    let res = new ParseResult();
 
     if (!this.current_tok.matches(TT_KEYWORD, "SAMTANG")) {
       return res.failure(
@@ -885,153 +959,155 @@ class Parser {
     res.register_advancement();
     this.advance();
 
-    if(this.current_tok.type !== TT_LPAREN){
-        return res.failure(
-            new InvalidSyntaxError(
-                this.current_tok.pos_start,
-                this.current_tok.pos_end,
-                "Expected '('"
-            )
-        )
+    if (this.current_tok.type !== TT_LPAREN) {
+      return res.failure(
+        new InvalidSyntaxError(
+          this.current_tok.pos_start,
+          this.current_tok.pos_end,
+          "Expected '('",
+        ),
+      );
     }
 
     res.register_advancement();
-    this.advance()
+    this.advance();
 
     let condition = res.register(this.expr());
     if (res.error) return res;
 
-    if(this.current_tok.type !== TT_RPAREN){
-        return res.failure(
-            new InvalidSyntaxError(
-                this.current_tok.pos_start,
-                this.current_tok.pos_end,
-                "Expected ')'"
-            )
-        )
+    if (this.current_tok.type !== TT_RPAREN) {
+      return res.failure(
+        new InvalidSyntaxError(
+          this.current_tok.pos_start,
+          this.current_tok.pos_end,
+          "Expected ')'",
+        ),
+      );
     }
 
     res.register_advancement();
-    this.advance()
+    this.advance();
 
     let body = res.register(this.block("<loop>"));
     if (res.error) return res;
 
-    return res.success(
-      new WhileNode(condition, body),
-    );
+    return res.success(new WhileNode(condition, body));
   }
 
-
-  func_def(){
+  func_def() {
     let res = new ParseResult();
     let pos_start = this.current_tok.pos_start.copy();
 
-    if(!this.current_tok.matches(TT_KEYWORD, "LIHOK")){
-        return res.failure(
-            new InvalidSyntaxError(
-                this.current_tok.pos_start,
-                this.current_tok.pos_end,
-                "Expected 'LIHOK'"
-            )
-        )
+    if (!this.current_tok.matches(TT_KEYWORD, "LIHOK")) {
+      return res.failure(
+        new InvalidSyntaxError(
+          this.current_tok.pos_start,
+          this.current_tok.pos_end,
+          "Expected 'LIHOK'",
+        ),
+      );
     }
-    
+
     res.register_advancement();
     this.advance();
 
-    if(this.current_tok.type !== TT_IDENTIFIER){
-        return res.failure(
-            new InvalidSyntaxError(
-                this.current_tok.pos_start,
-                this.current_tok.pos_end,
-                "Expected identifier"
-            )
-        )
+    if (this.current_tok.type !== TT_IDENTIFIER) {
+      return res.failure(
+        new InvalidSyntaxError(
+          this.current_tok.pos_start,
+          this.current_tok.pos_end,
+          "Expected identifier",
+        ),
+      );
     }
 
     let func_name_token = this.current_tok;
 
     res.register_advancement();
-    this.advance()
+    this.advance();
 
-    if(this.current_tok.type !== TT_LPAREN){
-        return res.failure(
-            new InvalidSyntaxError(
-                this.current_tok.pos_start,
-                this.current_tok.pos_end,
-                "Expected '('"
-            )
-        )
+    if (this.current_tok.type !== TT_LPAREN) {
+      return res.failure(
+        new InvalidSyntaxError(
+          this.current_tok.pos_start,
+          this.current_tok.pos_end,
+          "Expected '('",
+        ),
+      );
     }
 
     res.register_advancement();
-    this.advance()
+    this.advance();
 
     let args = [];
 
-    while(this.current_tok.type !== TT_RPAREN){
-        if(!["NUMERO", "TIPIK", "LETRA", "TINUOD"].includes(this.current_tok.value)){
-            return res.failure(
-                new InvalidSyntaxError(
-                    this.current_tok.pos_start,
-                    this.current_tok.pos_end,
-                    "Expected data type"
-                )
-            )
-        }
+    while (this.current_tok.type !== TT_RPAREN) {
+      if (
+        !["NUMERO", "TIPIK", "LETRA", "TINUOD"].includes(this.current_tok.value)
+      ) {
+        return res.failure(
+          new InvalidSyntaxError(
+            this.current_tok.pos_start,
+            this.current_tok.pos_end,
+            "Expected data type",
+          ),
+        );
+      }
 
-        let type = this.current_tok.value
+      let type = this.current_tok.value;
 
+      res.register_advancement();
+      this.advance();
+
+      if (this.current_tok.type !== TT_IDENTIFIER) {
+        return res.failure(
+          new InvalidSyntaxError(
+            this.current_tok.pos_start,
+            this.current_tok.pos_end,
+            "Expected identifier",
+          ),
+        );
+      }
+
+      args.push({ type: type, name: this.current_tok });
+      res.register_advancement();
+      this.advance();
+      if (this.current_tok.type === TT_COMMA) {
         res.register_advancement();
-        this.advance()
-
-        if(this.current_tok.type !== TT_IDENTIFIER){
-            return res.failure(
-                new InvalidSyntaxError(
-                    this.current_tok.pos_start,
-                    this.current_tok.pos_end,
-                    "Expected identifier"
-                )
-            )
-        }
-
-        args.push({type: type, name: this.current_tok})
-        res.register_advancement();
-        this.advance()
-        if(this.current_tok.type === TT_COMMA){
-            res.register_advancement();
-            this.advance()
-        }
+        this.advance();
+      }
     }
     res.register_advancement();
-    this.advance()
+    this.advance();
 
     let return_type = null;
-    if(["NUMERO", "TIPIK", "LETRA", "TINUOD"].includes(this.current_tok.value)){
-        switch(this.current_tok.value){
-            case "NUMERO":
-                return_type = TT_INT
-                break
-            case "TIPIK":
-                return_type = TT_FLOAT
-                break
-            case "LETRA":
-                return_type = TT_LETRA
-                break
-            case "TINUOD":
-                return_type = TT_BOOLEAN
-                break
-        }
-        res.register_advancement();
-        this.advance()
+    if (
+      ["NUMERO", "TIPIK", "LETRA", "TINUOD"].includes(this.current_tok.value)
+    ) {
+      switch (this.current_tok.value) {
+        case "NUMERO":
+          return_type = TT_INT;
+          break;
+        case "TIPIK":
+          return_type = TT_FLOAT;
+          break;
+        case "LETRA":
+          return_type = TT_LETRA;
+          break;
+        case "TINUOD":
+          return_type = TT_BOOLEAN;
+          break;
+      }
+      res.register_advancement();
+      this.advance();
     }
     let body = res.register(this.block(func_name_token.value));
-    if(res.error) return res;
+    if (res.error) return res;
 
-    return res.success(new FuncDefNode(func_name_token, args, body, return_type))
-}
-
+    return res.success(
+      new FuncDefNode(func_name_token, args, body, return_type),
+    );
+  }
 
   block(name) {
     let res = new ParseResult();

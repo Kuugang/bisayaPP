@@ -1,0 +1,26 @@
+{
+  "name": "bisayapp",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/Kuugang/bisayaPP#readme",
+  "bugs": {
+    "url": "https://github.com/Kuugang/bisayaPP/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kuugang/bisayaPP.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "bisaya.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "readline-sync": "^1.4.10"
+  }
+}

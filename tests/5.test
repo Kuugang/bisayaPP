@@ -1,6 +1,6 @@
 SUGOD
-    LIHOK a() PUNDOK{
-        IULI
+    LIHOK a() NUMERO PUNDOK{
+        IULI 5
     }
     MUGNA NUMERO aa = a()
 

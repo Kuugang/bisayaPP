@@ -3,7 +3,6 @@ const {
   TT_FLOAT,
   TT_LETRA,
   TT_STRING,
-  TT_IDENTIFIER,
   TT_KEYWORD,
   TT_PLUS,
   TT_MINUS,
@@ -11,30 +10,35 @@ const {
   TT_DIV,
   TT_MOD,
   TT_POW,
-  TT_EQ,
-  TT_LPAREN,
-  TT_RPAREN,
-  TT_LSQUARE,
-  TT_RSQUARE,
   TT_EE,
   TT_NE,
   TT_LT,
   TT_GT,
   TT_LTE,
   TT_GTE,
-  TT_COMMA,
-  TT_ARROW,
-  TT_NEWLINE,
-  TT_EOF,
   TT_NOT,
   TT_BOOLEAN,
   TT_DECREMENT,
   TT_INCREMENT,
 } = require("./Token.js");
 const { Char, String, Boolean, Number, List } = require("./Value.js");
-const { RTError, SemanticError } = require("./Error.js");
+const { RTError, TypeError } = require("./Error.js");
 const { Context } = require("./Context.js");
 const { RTResult } = require("./RTResult.js");
+
+var readlineSync = require("readline-sync");
+const { VarAccessNode } = require("./Node.js");
+
+const throwTypeError = (node, expected, received, context) => {
+  return new RTResult().failure(
+    new TypeError(
+      node.pos_start,
+      node.pos_end,
+      `Expected ${expected}, but received ${received}`,
+      context,
+    ),
+  );
+};
 
 class Interpreter {
   visit(node, context) {
@@ -193,7 +197,7 @@ class Interpreter {
     let res = new RTResult();
 
     res.register(this.visit(node.initialization_node, context));
-    if(res.error)return res
+    if (res.error) return res;
 
     let condition_node = res.register(this.visit(node.condition_node, context));
     if (res.should_return()) return res;
@@ -223,35 +227,35 @@ class Interpreter {
       if (res.should_return()) return res;
     }
 
-    return res.success(
-      new Number(null),
-    );
+    return res.success(new Number(null));
   }
 
   visit_WhileNode(node, context) {
     let res = new RTResult();
 
     while (true) {
-        let condition_node = res.register(this.visit(node.condition_node, context));
+      let condition_node = res.register(
+        this.visit(node.condition_node, context),
+      );
 
-        if (res.should_return()) return res;
-        if (condition_node.value === "DILI") {
-            break;
-        }
-    
-        res.register(this.visit(node.body_node, context));
-    
-        if (
-            res.should_return() &&
-            res.loop_should_continue == false &&
-            res.loop_should_break == false
-        ) {
-            return res;
-        }
-    
-        if (res.loop_should_continue) continue;
-    
-        if (res.loop_should_break) break;
+      if (res.should_return()) return res;
+      if (condition_node.value === "DILI") {
+        break;
+      }
+
+      res.register(this.visit(node.body_node, context));
+
+      if (
+        res.should_return() &&
+        res.loop_should_continue == false &&
+        res.loop_should_break == false
+      ) {
+        return res;
+      }
+
+      if (res.loop_should_continue) continue;
+
+      if (res.loop_should_break) break;
     }
     return res.success(new Number(null));
   }
@@ -278,26 +282,26 @@ class Interpreter {
     let var_name = node.var_name_tok.value;
     let variable = context.symbol_table.get(var_name);
 
-    if(variable === null && node.type === null){
-        return res.failure(
-            new RTError(
-                node.pos_start,
-                node.pos_end,
-                `Variable '${var_name}' is not defined`,
-                context,
-            ),
-        );
+    if (variable === null && node.type === null) {
+      return res.failure(
+        new RTError(
+          node.pos_start,
+          node.pos_end,
+          `Variable '${var_name}' is not defined`,
+          context,
+        ),
+      );
     }
 
     if (variable && node.type !== null && context === variable.context) {
-        return res.failure(
-          new RTError(
-            variable.pos_start,
-            variable.pos_end,
-            `Variable '${var_name}' is previously defined here`,
-            context,
-          ),
-        );
+      return res.failure(
+        new RTError(
+          variable.pos_start,
+          variable.pos_end,
+          `Variable '${var_name}' is previously defined here`,
+          context,
+        ),
+      );
     }
 
     let value = null;
@@ -305,44 +309,25 @@ class Interpreter {
       value = res.register(this.visit(node.value_node, context));
       if (res.should_return()) return res;
 
-      if(node.type === TT_BOOLEAN){
-        if(value.value !== "OO" && value.value !== "DILI"){
-          return res.failure(
-            new SemanticError(
-              value.pos_start,
-              value.pos_end,
-              `Expected ${node.type} received ${value.type}`,
-              context,
-            ),
-          );
-        }
+      if (node.type === TT_BOOLEAN) {
+        if (value.value !== "OO" && value.value !== "DILI")
+          return throwTypeError(value, node.type, value.type, context);
+
+        // KAY BASIN STRING NGA "OO" OR "DILI"
         value = new Boolean(value.value);
       }
 
-      if (
-        [TT_FLOAT, TT_INT].includes(node.type) &&
-        !(value instanceof Number)
-      ) {
-        return res.failure(
-          new SemanticError(
-            value.pos_start,
-            value.pos_end,
-            `Expected ${node.type} received ${value.type}`,
-            context,
-          ),
-        );
-      }
+      if ([TT_FLOAT, TT_INT].includes(node.type) && !(value instanceof Number))
+        return throwTypeError(value, node.type, value.type, context);
 
-      if (node.type === TT_LETRA && !(value instanceof Char)) {
-        return res.failure(
-          new SemanticError(
-            value.pos_start,
-            value.pos_end,
-            `Expected ${node.type} received ${value.type}`,
-            context,
-          ),
-        );
-      }
+      if (node.type === TT_LETRA && !(value instanceof Char))
+        return throwTypeError(value, node.type, value.type, context);
+
+      if (
+        node.type === TT_STRING &&
+        !(value instanceof String || value instanceof Char)
+      )
+        return throwTypeError(value, node.type, value.type, context);
     } else {
       switch (node.type) {
         case TT_INT:
@@ -426,70 +411,145 @@ class Interpreter {
     return res.success(new Number(0));
   }
 
-  visit_Block(node, context){
+  visit_InputNode(node, context) {
+    let res = new RTResult();
+    let var_toks = node.var_toks;
+
+    for (let i = 0; i < var_toks.length; i++) {
+      let value_node = res.register(
+        this.visit(new VarAccessNode(var_toks[i]), context),
+      );
+      if (res.error) return res;
+      let input = readlineSync.question();
+
+      switch (value_node.type) {
+        case "LETRA":
+          if (input.length > 1) {
+            return res.failure(
+              new TypeError(
+                var_toks[i].pos_start,
+                var_toks[i].pos_end,
+                `Unexpected input for type LETRA got '${input}'`,
+                context,
+              ),
+            );
+          }
+          value_node = new Char(input);
+          break;
+        case "NUMERO":
+          if (!/^-?\d+(\.\d*)?$/.test(input.trim())) {
+            return res.failure(
+              new TypeError(
+                var_toks[i].pos_start,
+                var_toks[i].pos_end,
+                `Unexpected input for type NUMERO got '${input}'`,
+                context,
+              ),
+            );
+          }
+
+          value_node = new Number(parseInt(input));
+          break;
+        case "TIPIK":
+          if (!/^-?\d+(\.\d*)?$/.test(input.trim())) {
+            return res.failure(
+              new TypeError(
+                var_toks[i].pos_start,
+                var_toks[i].pos_end,
+                `Unexpected input for type DILI got '${input}'`,
+                context,
+              ),
+            );
+          }
+          value_node = new Number(parseFloat(input));
+          break;
+        case "TINUOD":
+          if (!["OO", "DILI"].includes(input)) {
+            return res.failure(
+              new TypeError(
+                var_toks[i].pos_start,
+                var_toks[i].pos_end,
+                `Unexpected input for type TINUOD got '${input}'`,
+                context,
+              ),
+            );
+          }
+          value_node = new Boolean(input);
+          break;
+      }
+      context.symbol_table.set(var_toks[i].value, value_node);
+    }
+
+    return res.success(new Number(0));
+  }
+
+  visit_Block(node, context) {
     let res = new RTResult();
     let value = null;
 
     let new_context = new Context(node.name, context, node.pos_start);
     new_context.symbol_table = context.symbol_table;
 
-    for(let child of node.statements){
+    for (let child of node.statements) {
       value = res.register(this.visit(child, new_context));
-      if(res.should_return()) return res;
+      if (res.should_return()) return res;
     }
     return res.success(value);
   }
 
-  visit_BreakNode(node, context){
-    if(context.display_name !== "<loop>"){
-        return new RTResult().failure(
-            new RTError(
-            node.pos_start,
-            node.pos_end,
-            "Break statement outside loop or switch",
-            context,
-            ),
-        );
+  visit_BreakNode(node, context) {
+    if (context.display_name !== "<loop>") {
+      return new RTResult().failure(
+        new RTError(
+          node.pos_start,
+          node.pos_end,
+          "Break statement outside loop or switch",
+          context,
+        ),
+      );
     }
     return new RTResult().success_break();
   }
 
-  visit_ContinueNode(node, context){
-    if(context.display_name !== "<loop>"){
-        return new RTResult().failure(
-            new RTError(
-            node.pos_start,
-            node.pos_end,
-            "Continue statement outside loop",
-            context,
-            ),
-        );
+  visit_ContinueNode(node, context) {
+    if (context.display_name !== "<loop>") {
+      return new RTResult().failure(
+        new RTError(
+          node.pos_start,
+          node.pos_end,
+          "Continue statement outside loop",
+          context,
+        ),
+      );
     }
     return new RTResult().success_continue();
   }
 
-  visit_FuncDefNode(node, context){
+  visit_FuncDefNode(node, context) {
     let res = new RTResult();
     let func_name = node.var_name_tok.value;
     let body_node = node.body_node;
-    let args = node.args
-    let return_type = node.return_type
+    let args = node.args;
+    let return_type = node.return_type;
 
     const { Function } = require("./Function.js");
-    let func_value = new Function(func_name, body_node, args, return_type).set_context(
-      context,
-    );
+    let func_value = new Function(
+      func_name,
+      body_node,
+      args,
+      return_type,
+    ).set_context(context);
 
     context.symbol_table.set(func_name, func_value);
     return res.success(func_value);
   }
 
-  visit_ReturnNode(node, context){
+  visit_ReturnNode(node, context) {
     let res = new RTResult();
     let value = null;
-    if(node.node_to_return){
+    if (node.node_to_return) {
       value = res.register(this.visit(node.node_to_return, context));
-      if(res.should_return()) return res;
+      if (res.should_return()) return res;
     }
 
     return res.success_return(value);
@@ -497,3 +557,4 @@ class Interpreter {
 }
 
 module.exports = { RTResult, Interpreter };
+

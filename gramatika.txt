@@ -1,70 +1,73 @@
-program     : SUGOD statements KATAPUSAN
+program             : SUGOD statements KATAPUSAN
 
-statements  : NEWLINE* statement ((NEWLINE)+ statement)* NEWLINE*
+statements          : NEWLINE* statement ((NEWLINE)+ statement)* NEWLINE*
 
-statement   : KEYWORD: IULI expr?
-            | KEYWORD: PADAYON
-            | KEYWORD: HUNONG
-            | print_statement
-            | expr
+statement           : KEYWORD: IULI expr?
+                    | KEYWORD: PADAYON
+                    | KEYWORD: HUNONG
+                    | print_statement
+                    | input_statement
+                    | expr
 
-print_statement: KEYWORD:IPAKITA expr (& expr)* 
+print_statement:    : KEYWORD:IPAKITA COLON expr (& expr)* 
 
-expr        : var-def
-            | var-assign
-            | compr-expr ((KEYWORD:AND|KEYWORD:OR) compr-expr)*  
-            
-var-def     : KEYWORD: MUGNA KEYWORD: DATATYPE var-assign
+input_statement     : KEYWORD: DAWAT COLON IDENTIFIER (, IDENTIFIER)*
 
-var-assign  : IDENTIFIER (EQ IDENTIFIER)* (EQ expr)? (, (EQ IDENTIFIER)* (EQ expr)? )*
+expr                : var-def
+                    | var-assign
+                    | compr-expr ((KEYWORD:AND|KEYWORD:OR) compr-expr)*  
+                    
+var-def             : KEYWORD: MUGNA KEYWORD: DATATYPE var-assign
 
-compr-expr  : NOT compr-expr
-            | arith-expr ((EE|LT|GT|LTE|GTE) arith-expr)*
+var-assign          : IDENTIFIER (EQ IDENTIFIER)* (EQ expr)? (, (EQ IDENTIFIER)* (EQ expr)? )*
+
+compr-expr          : NOT compr-expr
+                    | arith-expr ((EE|LT|GT|LTE|GTE) arith-expr)*
         
-arith-expr  : term ((PLUS|MINUS) term)*
+arith-expr          : term ((PLUS|MINUS) term)*
 
-term        : factor ((MUL|DIV|%) factor)*
+term                : factor ((MUL|DIV|%) factor)*
 
-factor      : (PLUS|MINUS) factor
-            | power (INCREMENT | DECREMENT)
-            | power
+factor              : (PLUS|MINUS) factor
+                    | power (INCREMENT | DECREMENT)
+                    | power
 
-power       : call (POW factor)*
+power               : call (POW factor)*
 
-call        : atom (LPAREN (expr (COMMA expr)*)? RPAREN)?
+call                : atom (LPAREN (expr (COMMA expr)*)? RPAREN)?
 
-atom        : INT|FLOAT|STRING|BOOL|IDENTIFIER
-            | LPAREN expr RPAREN
-            | list-expr
-            | if-expr
-            | for-expr
-            | while-expr
-            | func-def
+atom                : INT|FLOAT|STRING|BOOL|IDENTIFIER
+                    | LPAREN expr RPAREN
+                    | list-expr
+                    | if-expr
+                    | for-expr
+                    | while-expr
+                    | func-def
 
-list-expr   : LSQUARE (expr (COMMA expr)*)? RSQUARE
+list-expr           : LSQUARE (expr (COMMA expr)*)? RSQUARE
 
-if-expr     : KEYWORD:IF expr KEYWORD:THEN 
-              (statement if-expr-b|if-expr-c?)
-              | (NEWLINE statements KEYWORD:END|if-expr-b|if-expr-c)
+if-expr             : KEYWORD:IF expr KEYWORD:THEN 
+                      (statement if-expr-b|if-expr-c?)
+                      | (NEWLINE statements KEYWORD:END|if-expr-b|if-expr-c)
 
-if-expr-b   : KEYWORD:ELIF expr KEYWORD:THEN 
-              (statement if-expr-b|if-expr-c?)
-              | (NEWLINE statements KEYWORD:END|if-expr-b|if-expr-c)
+if-expr-b           : KEYWORD:ELIF expr KEYWORD:THEN 
+                      (statement if-expr-b|if-expr-c?)
+                      | (NEWLINE statements KEYWORD:END|if-expr-b|if-expr-c)
 
-if-expr-c   : KEYWORD:ELSE 
-              statement
-              | (NEWLINE statements KEYWORD:END)
-            
-for-expr    : KEYWORD: ALANG SA (IDENTIFIER | var-def | var-assign COMMA compr-expr COMMA compr-expr) block
+if-expr-c           : KEYWORD:ELSE 
+                      statement
+                      | (NEWLINE statements KEYWORD:END)
+                    
+for-expr            : KEYWORD: ALANG SA (IDENTIFIER | var-def | var-assign COMMA compr-expr COMMA compr-expr) block
 
-while-expr  : KEYWORD: SAMTANG(expr) block
+while-expr          : KEYWORD: SAMTANG(expr) block
 
-dowhile-expr: KEYWORD: BUHAT block SAMTANG(expr)
+dowhile-expr        : KEYWORD: BUHAT block SAMTANG(expr)
 
-func-def    : KEYWORD: LIHOK IDENTIFIER LPAREN 
-              (DATATYPE IDENTIFIER (COMMA DATATYPE IDENTIFIER)*)? 
-              RPAREN (KEYWORD: DATATYPE)? block
+func-def            : KEYWORD: LIHOK IDENTIFIER LPAREN 
+                      (DATATYPE IDENTIFIER (COMMA DATATYPE IDENTIFIER)*)? 
+                      RPAREN (KEYWORD: DATATYPE)? block
 
-block       : KEYWORD: PUNDOK LCURLY
-              statements
-              RCURLY
+block               : KEYWORD: PUNDOK LCURLY
+                      statements
+                      RCURLY

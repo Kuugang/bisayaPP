@@ -1,6 +1,5 @@
 const { Token, TT_IDENTIFIER } = require("./Token");
 
-
 class VarAssignNode {
   constructor(type = null, var_name_tok, value_node = null) {
     this.type = type;
@@ -113,13 +112,13 @@ class ForNode {
   }
 }
 
-class WhileNode{
-    constructor(condition_node, body_node){
-        this.condition_node = condition_node;
-        this.body_node = body_node;
-        this.pos_start = this.condition_node.pos_start;
-        this.pos_end = this.body_node.pos_end;
-    }
+class WhileNode {
+  constructor(condition_node, body_node) {
+    this.condition_node = condition_node;
+    this.body_node = body_node;
+    this.pos_start = this.condition_node.pos_start;
+    this.pos_end = this.body_node.pos_end;
+  }
 }
 
 class ListNode {
@@ -154,40 +153,46 @@ class PrintNode {
   }
 }
 
-class Block{
-    constructor(statements, name = "<block>", pos_start, pos_end){
-        this.statements = statements;
-        this.name = name;
-        this.pos_start = pos_start;
-        this.pos_end = pos_end;
-    }
+class InputNode {
+  constructor(pos_start, var_toks) {
+    this.var_toks = var_toks;
+    this.pos_start = pos_start;
+    this.pos_end = var_toks[var_toks.length - 1].pos_end;
+  }
 }
 
-class BreakNode{
-    constructor(pos_start, pos_end){
-        this.pos_start = pos_start;
-        this.pos_end = pos_end;
-    }
-}
-class ContinueNode{
-    constructor(pos_start, pos_end){
-        this.pos_start = pos_start;
-        this.pos_end = pos_end;
-    }
+class Block {
+  constructor(statements, name = "<block>", pos_start, pos_end) {
+    this.statements = statements;
+    this.name = name;
+    this.pos_start = pos_start;
+    this.pos_end = pos_end;
+  }
 }
 
+class BreakNode {
+  constructor(pos_start, pos_end) {
+    this.pos_start = pos_start;
+    this.pos_end = pos_end;
+  }
+}
+class ContinueNode {
+  constructor(pos_start, pos_end) {
+    this.pos_start = pos_start;
+    this.pos_end = pos_end;
+  }
+}
 
+class FuncDefNode {
+  constructor(var_name_tok, args, body_node, return_type) {
+    this.var_name_tok = var_name_tok;
+    this.args = args;
+    this.body_node = body_node;
+    this.return_type = return_type;
 
-class FuncDefNode{
-    constructor(var_name_tok, args, body_node, return_type){
-        this.var_name_tok = var_name_tok;
-        this.args = args;
-        this.body_node = body_node;
-        this.return_type = return_type;
-
-        this.pos_start = this.var_name_tok.pos_start;
-        this.pos_end = this.body_node.pos_end;
-    }
+    this.pos_start = this.var_name_tok.pos_start;
+    this.pos_end = this.body_node.pos_end;
+  }
 }
 class CallNode {
   constructor(node_to_call, arg_nodes) {
@@ -202,14 +207,13 @@ class CallNode {
   }
 }
 
-class ReturnNode{
-    constructor(node_to_return, pos_start, pos_end){
-        this.node_to_return = node_to_return;
-        this.pos_start = pos_start;
-        this.pos_end = pos_end;
-    }
+class ReturnNode {
+  constructor(node_to_return, pos_start, pos_end) {
+    this.node_to_return = node_to_return;
+    this.pos_start = pos_start;
+    this.pos_end = pos_end;
+  }
 }
-
 
 module.exports = {
   VarAssignNode,
@@ -225,10 +229,11 @@ module.exports = {
   ListNode,
   BinaryOperationNode,
   PrintNode,
+  InputNode,
   Block,
   BreakNode,
   ContinueNode,
   FuncDefNode,
   CallNode,
-  ReturnNode
+  ReturnNode,
 };

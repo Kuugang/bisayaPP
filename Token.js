@@ -1,7 +1,7 @@
 const TT_INT = "NUMERO";
 const TT_FLOAT = "TIPIK";
 const TT_LETRA = "LETRA";
-const TT_STRING = "STRING";
+const TT_STRING = "PULONG";
 const TT_BOOLEAN = "TINUOD";
 const TT_SEMICOLON = "SEMICOLON";
 const TT_INCREMENT = "INCREMENT";
@@ -42,6 +42,7 @@ const KEYWORDS = [
   "MUGNA", //KEYWORD WHEN DECLARING VARIABLE EG. MUGNA NUMERO x = 5
   "NUMERO", //INT
   "LETRA", //CHAR
+  "PULONG", //STRING
   "TINUOD", //BOOLEAN
   "TIPIK", //FLOAT
   "UG", //AND
@@ -60,6 +61,7 @@ const KEYWORDS = [
   "IULI", //RETURN,
   "WALA", //void
   "LIHOK", //FUNCTION
+  "DAWAT", //INPUT
 ];
 
 const KEYWORD_PATTERN = new RegExp(
