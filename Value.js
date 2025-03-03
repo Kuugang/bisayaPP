@@ -1,5 +1,5 @@
 const { RTError } = require("./Error");
-const { RTResult } = require("./RTResult"); 
+const { RTResult } = require("./RTResult");
 const { TT_LETRA, TT_STRING, TT_BOOLEAN } = require("./Token");
 
 class Value {
@@ -139,12 +139,11 @@ class Boolean extends Value {
     this.type = TT_BOOLEAN;
 
     if (typeof value === "string") {
-        this.num_value = value === "OO" ? 1 : 0;
-    } else{
-        this.num_value = value;
-        this.value = value === 1 ? "OO" : "DILI";
+      this.num_value = value === "OO" ? 1 : 0;
+    } else {
+      this.num_value = value;
+      this.value = value === 1 ? "OO" : "DILI";
     }
-
   }
 
   and(other) {
@@ -159,7 +158,7 @@ class Boolean extends Value {
   }
 
   or(other) {
-    if (other instanceof Boolean|| other instanceof Number) {
+    if (other instanceof Boolean || other instanceof Number) {
       return [
         new Boolean(this.num_value || other.num_value === 1 ? "OO" : "DILI"),
         null,
@@ -262,7 +261,7 @@ class Number extends Value {
             other.pos_end,
             "Division by zero",
             this.context,
-          )
+          ),
         ];
       }
       return [

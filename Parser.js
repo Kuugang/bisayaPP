@@ -710,9 +710,11 @@ class Parser {
     if (this.current_tok.type == TT_LPAREN) {
       res.register_advancement();
       this.advance();
+      let pos_end;
       let arg_nodes = [];
 
       if (this.current_tok.type == TT_RPAREN) {
+        pos_end = this.current_tok.pos_end;
         res.register_advancement();
         this.advance();
       } else {
@@ -745,10 +747,11 @@ class Parser {
           );
         }
 
+        pos_end = this.current_tok.pos_end;
         res.register_advancement();
         this.advance();
       }
-      return res.success(new CallNode(atom, arg_nodes));
+      return res.success(new CallNode(atom, arg_nodes, pos_end));
     }
 
     return res.success(atom);
@@ -1105,7 +1108,7 @@ class Parser {
     if (res.error) return res;
 
     return res.success(
-      new FuncDefNode(func_name_token, args, body, return_type),
+      new FuncDefNode(pos_start, func_name_token, args, body, return_type),
     );
   }
 

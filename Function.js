@@ -3,11 +3,12 @@ const { RTResult } = require("./RTResult");
 const { Interpreter } = require("./Interpreter");
 const { Context } = require("./Context");
 const { SymbolTable } = require("./SymbolTable");
-const { RTError } = require("./Error");
+const { RTError, TypeError } = require("./Error");
 class BaseFunction extends Value {
   constructor(name) {
     super();
     this.name = name || "<anonymous>";
+    this.type = "LIHOK";
   }
 
   generate_new_context() {
@@ -18,7 +19,6 @@ class BaseFunction extends Value {
 
   check_args(arg_names, args) {
     let res = new RTResult();
-
     if (args.length > arg_names.length) {
       return res.failure(
         new RTError(
@@ -44,7 +44,7 @@ class BaseFunction extends Value {
     for (let i = 0; i < arg_names.length; i++) {
       if (arg_names[i].type != args[i].type) {
         return res.failure(
-          new RTError(
+          new TypeError(
             args[i].pos_start,
             args[i].pos_end,
             `Expected ${arg_names[i].type} but got ${args[i].type}`,
@@ -133,21 +133,21 @@ class BuiltInFunction extends BaseFunction {
 }
 
 class Function extends BaseFunction {
-  constructor(name, body_node, args, return_type) {
-    super(name);
-    this.body_node = body_node;
-    this.args = args;
-    this.return_type = return_type;
+  constructor(node) {
+    super(node.name);
+    this.node = node;
+    this.body_node = node.body_node;
+    this.args = node.args;
+    this.return_type = node.return_type;
   }
 
   execute(args, context) {
     let res = new RTResult();
     let interpreter = new Interpreter();
-    //let exec_ctx = this.generate_new_context();
+    context = this.generate_new_context();
 
     res.register(this.check_and_populate_args(this.args, args, context));
     if (res.should_return()) return res;
-
     let value = res.register(interpreter.visit(this.body_node, context));
     if (res.should_return() && res.func_return_value === null) return res;
 
@@ -166,17 +166,14 @@ class Function extends BaseFunction {
       );
     }
 
-    if (
-      this.return_type &&
-      res.func_return_value &&
-      this.return_type != res.func_return_value.type
-    ) {
+    //TODO FIX should not throw an error when return type if int and returned value type is float and vice versa
+    if (res.func_return_value.type !== this.return_type) {
       return res.failure(
-        new RTError(
-          this.pos_start,
-          this.pos_end,
+        new TypeError(
+          res.func_return_value.return_node.pos_start,
+          res.func_return_value.return_node.pos_end,
           `Expected return type of ${this.return_type} but got ${res.func_return_value.type}`,
-          this.context,
+          context,
         ),
       );
     }
@@ -186,12 +183,7 @@ class Function extends BaseFunction {
   }
 
   copy() {
-    let copy = new Function(
-      this.name,
-      this.body_node,
-      this.args,
-      this.return_type,
-    );
+    let copy = new Function(this.node);
     copy.set_context(this.context);
     copy.set_pos(this.pos_start, this.pos_end);
     return copy;
@@ -206,4 +198,3 @@ BuiltInFunction.prototype.execute_print.arg_names = ["value"];
 BuiltInFunction.print = new BuiltInFunction("print");
 
 module.exports = { BuiltInFunction, Function };
-

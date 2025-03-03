@@ -88,7 +88,18 @@ class Lexer {
       } else if (this.current_char == "+") {
         tokens.push(this.make_plus());
       } else if (this.current_char == "-") {
-        tokens.push(this.make_minus());
+        if (
+          (tokens.length === 0 ||
+            tokens[tokens.length - 1].type === TT_NEWLINE) &&
+          this.text[this.pos.idx + 1] === "-"
+        ) {
+          while (!/^\$|\n$/.test(this.current_char)) {
+            this.advance();
+          }
+          this.advance();
+        } else {
+          tokens.push(this.make_minus());
+        }
       } else if (this.current_char == "*") {
         tokens.push(new Token(TT_MUL, null, this.pos, null));
         this.advance();

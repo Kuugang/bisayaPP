@@ -184,26 +184,23 @@ class ContinueNode {
 }
 
 class FuncDefNode {
-  constructor(var_name_tok, args, body_node, return_type) {
+  constructor(pos_start, var_name_tok, args, body_node, return_type) {
     this.var_name_tok = var_name_tok;
     this.args = args;
     this.body_node = body_node;
     this.return_type = return_type;
 
-    this.pos_start = this.var_name_tok.pos_start;
+    this.pos_start = pos_start;
     this.pos_end = this.body_node.pos_end;
   }
 }
 class CallNode {
-  constructor(node_to_call, arg_nodes) {
+  constructor(node_to_call, arg_nodes, pos_end) {
     this.node_to_call = node_to_call;
     this.arg_nodes = arg_nodes;
 
     this.pos_start = this.node_to_call.pos_start;
-
-    if (this.arg_nodes.length > 0)
-      this.pos_end = this.arg_nodes[this.arg_nodes.length - 1].pos_end;
-    else this.pos_end = this.node_to_call.pos_end;
+    this.pos_end = pos_end;
   }
 }
 

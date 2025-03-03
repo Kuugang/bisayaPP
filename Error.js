@@ -59,39 +59,41 @@ class SemanticError extends Error {
   }
 }
 
-class TypeError extends Error {
-  constructor(pos_start, pos_end, details = "") {
-    super(pos_start, pos_end, "Type Error", details);
-  }
-}
-
 class RTError extends Error {
-  constructor(pos_start, pos_end, details, context) {
-    super(pos_start, pos_end, "Runtime Error", details);
+  constructor(pos_start, pos_end, details, context, type = "Runtime Error") {
+    super(pos_start, pos_end, type, details);
     this.context = context;
   }
 
-
-  as_string(){
-    result  = this.generate_traceback()
-    result += `${this.error_name}: ${this.details}`
-    result += '\n\n' + string_with_arrows(this.pos_start.ftxt, this.pos_start, this.pos_end)
-    return result
+  as_string() {
+    result = this.generate_traceback();
+    result += `${this.error_name}: ${this.details}`;
+    result +=
+      "\n\n" +
+      string_with_arrows(this.pos_start.ftxt, this.pos_start, this.pos_end);
+    return result;
   }
 
-    generate_traceback(){
-
+  generate_traceback() {
     let result = "";
     let pos = this.pos_start;
     let ctx = this.context;
     while (ctx) {
-      result = `  File ${pos.fn}, line ${pos.ln + 1}, in ${ctx.display_name}\n` + result;
+      result =
+        `  File ${pos.fn}, line ${pos.ln + 1}, in ${ctx.display_name}\n` +
+        result;
       pos = ctx.parent_entry_pos;
       ctx = ctx.parent;
     }
 
     return "Traceback (most recent call last):\n" + result;
-    }
+  }
+}
+
+class TypeError extends RTError {
+  constructor(pos_start, pos_end, details = "", context) {
+    super(pos_start, pos_end, details, context, "Type Error");
+  }
 }
 
 module.exports = {

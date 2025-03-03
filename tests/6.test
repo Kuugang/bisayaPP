@@ -1,5 +1,46 @@
-SUGOD
-    MUGNA PULONG a = "a"
 
-    IPAKITA: a
+-- THIS IS A PROGRAM
+SUGOD
+
+    LIHOK a() NUMERO PUNDOK{
+        IULI 100
+    }
+
+    --AMBOT GUSTO KO NA MAG KMS
+    
+    LIHOK lt(NUMERO a, NUMERO b) TINUOD PUNDOK{
+        IULI a < b
+    }
+
+    LIHOK gte(NUMERO a, NUMERO b) TINUOD PUNDOK{
+        IULI a >= b
+    }
+
+    LIHOK add(NUMERO a, NUMERO b) NUMERO PUNDOK{
+        IULI a + b
+    }
+
+    LIHOK multiply(NUMERO a, NUMERO b) NUMERO PUNDOK{
+        IULI a * b
+    }
+
+    LIHOK divide(NUMERO a, NUMERO b) NUMERO PUNDOK{
+        IULI a / b
+    }
+    
+    --ALANG SA(MUGNA NUMERO i = a(), gte(i, 1), i = divide(i, 2))PUNDOK{
+    --    IPAKITA: i & " "
+    --}
+    
+
+    --RETURNS AN ERROR BECAUSE a is defined as a function
+    MUGNA NUMERO b = a()
+
+    a--
+    --SAMTANG(b > 0)PUNDOK{
+    --    IPAKITA: "AAAAAAA"
+    --}
+
 KATAPUSAN
+
+--

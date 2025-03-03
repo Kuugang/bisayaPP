@@ -27,7 +27,7 @@ const { Context } = require("./Context.js");
 const { RTResult } = require("./RTResult.js");
 
 var readlineSync = require("readline-sync");
-const { VarAccessNode } = require("./Node.js");
+const { VarAccessNode, FuncDefNode } = require("./Node.js");
 
 const throwTypeError = (node, expected, received, context) => {
   return new RTResult().failure(
@@ -112,7 +112,6 @@ class Interpreter {
   visit_PostfixOperationNode(node, context) {
     let res = new RTResult();
     let number = res.register(this.visit(node.node, context));
-
     if (res.should_return()) return res;
 
     let error = null;
@@ -120,9 +119,17 @@ class Interpreter {
     let originalValue = number.copy();
 
     if (node.op_tok.type == TT_INCREMENT) {
-      [number, error] = number.add(new Number(1));
+      [number, error] = number.add(
+        new Number(1, "NUMERO")
+          .set_context(context)
+          .set_pos(node.pos_start, node.pos_end),
+      );
     } else if (node.op_tok.type == TT_DECREMENT) {
-      [number, error] = number.subtract(new Number(1));
+      [number, error] = number.subtract(
+        new Number(1, "NUMERO")
+          .set_context(context)
+          .set_pos(node.pos_start, node.pos_end),
+      );
     }
 
     if (error) return res.failure(error);
@@ -196,20 +203,27 @@ class Interpreter {
   visit_ForNode(node, context) {
     let res = new RTResult();
 
-    res.register(this.visit(node.initialization_node, context));
+    let new_context = new Context("<loop>", context, node.pos_start);
+    new_context.symbol_table = context.symbol_table;
+
+    res.register(this.visit(node.initialization_node, new_context));
     if (res.error) return res;
 
-    let condition_node = res.register(this.visit(node.condition_node, context));
+    let condition_node = res.register(
+      this.visit(node.condition_node, new_context),
+    );
     if (res.should_return()) return res;
 
     while (true) {
-      condition_node = res.register(this.visit(node.condition_node, context));
+      condition_node = res.register(
+        this.visit(node.condition_node, new_context),
+      );
       if (res.should_return()) return res;
       if (condition_node.value === "DILI") {
         break;
       }
 
-      res.register(this.visit(node.body_node, context));
+      res.register(this.visit(node.body_node, new_context));
 
       if (
         res.should_return() &&
@@ -223,7 +237,7 @@ class Interpreter {
 
       if (res.loop_should_break) break;
 
-      res.register(this.visit(node.update_node, context));
+      res.register(this.visit(node.update_node, new_context));
       if (res.should_return()) return res;
     }
 
@@ -233,9 +247,12 @@ class Interpreter {
   visit_WhileNode(node, context) {
     let res = new RTResult();
 
+    let new_context = new Context("<loop>", context, node.pos_start);
+    new_context.symbol_table = context.symbol_table;
+
     while (true) {
       let condition_node = res.register(
-        this.visit(node.condition_node, context),
+        this.visit(node.condition_node, new_context),
       );
 
       if (res.should_return()) return res;
@@ -243,7 +260,7 @@ class Interpreter {
         break;
       }
 
-      res.register(this.visit(node.body_node, context));
+      res.register(this.visit(node.body_node, new_context));
 
       if (
         res.should_return() &&
@@ -294,6 +311,16 @@ class Interpreter {
     }
 
     if (variable && node.type !== null && context === variable.context) {
+      if (variable.node instanceof FuncDefNode) {
+        return res.failure(
+          new RTError(
+            node.value_node.pos_start,
+            node.value_node.pos_end,
+            `${var_name} cannot be used as a function`,
+            context,
+          ),
+        );
+      }
       return res.failure(
         new RTError(
           variable.pos_start,
@@ -528,17 +555,11 @@ class Interpreter {
   visit_FuncDefNode(node, context) {
     let res = new RTResult();
     let func_name = node.var_name_tok.value;
-    let body_node = node.body_node;
-    let args = node.args;
-    let return_type = node.return_type;
 
     const { Function } = require("./Function.js");
-    let func_value = new Function(
-      func_name,
-      body_node,
-      args,
-      return_type,
-    ).set_context(context);
+    let func_value = new Function(node)
+      .set_context(context)
+      .set_pos(node.pos_start, node.pos_end);
 
     context.symbol_table.set(func_name, func_value);
     return res.success(func_value);
@@ -549,12 +570,11 @@ class Interpreter {
     let value = null;
     if (node.node_to_return) {
       value = res.register(this.visit(node.node_to_return, context));
+      value.return_node = node;
       if (res.should_return()) return res;
     }
-
     return res.success_return(value);
   }
 }
 
 module.exports = { RTResult, Interpreter };
-
