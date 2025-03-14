@@ -101,16 +101,16 @@ class Lexer {
           tokens.push(this.make_minus());
         }
       } else if (this.current_char == "*") {
-        tokens.push(new Token(TT_MUL, null, this.pos, null));
+        tokens.push(new Token(TT_MUL, "*", this.pos, null));
         this.advance();
       } else if (this.current_char == "/") {
-        tokens.push(new Token(TT_DIV, null, this.pos, null));
+        tokens.push(new Token(TT_DIV, "/", this.pos, null));
         this.advance();
       } else if (this.current_char == "%") {
-        tokens.push(new Token(TT_MOD, null, this.pos, null));
+        tokens.push(new Token(TT_MOD, "%", this.pos, null));
         this.advance();
       } else if (this.current_char == "(") {
-        tokens.push(new Token(TT_LPAREN, null, this.pos, null));
+        tokens.push(new Token(TT_LPAREN, "(", this.pos, null));
         this.advance();
       } else if (this.current_char == ")") {
         tokens.push(new Token(TT_RPAREN, null, this.pos, null));
@@ -290,9 +290,9 @@ class Lexer {
     if (this.current_char == "+") {
       type = TT_INCREMENT;
       this.advance();
-      return new Token(type, null, pos_start, this.pos);
+      return new Token(type, "++", pos_start, this.pos);
     } else {
-      return new Token(type, null, pos_start, null);
+      return new Token(type, "+", pos_start, null);
     }
   }
 
@@ -304,9 +304,9 @@ class Lexer {
     if (this.current_char == "-") {
       type = TT_DECREMENT;
       this.advance();
-      return new Token(type, null, pos_start, this.pos);
+      return new Token(type, "--", pos_start, this.pos);
     } else {
-      return new Token(type, null, pos_start, null);
+      return new Token(type, "-", pos_start, null);
     }
   }
 

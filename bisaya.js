@@ -28,6 +28,7 @@ function run(fn, text) {
   let parser = new Parser(tokens);
   ast = parser.parse();
   if (ast.error) return [null, ast.error];
+  //visualize_tree(ast.node);
 
   let interpreter = new Interpreter();
   let context = new Context("<program>");
@@ -63,3 +64,10 @@ fs.readFile(file_name, "utf8", (err, script) => {
 //     console.log(result);
 //   }
 // }
+//
+
+function visualize_tree(node) {
+  for (let a of node.element_nodes) {
+    console.log(a.toString());
+  }
+}

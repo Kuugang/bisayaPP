@@ -11,6 +11,19 @@ class VarAssignNode {
       ? this.value_node.pos_end
       : this.var_name_tok.pos_end;
   }
+
+  toString() {
+    let s = "Var Assign Node\n";
+
+    s += `|${this.var_name_tok.value.toString()}\n`;
+    if (this.value_node != null) {
+      s += `|${this.value_node.toString()}`;
+    } else {
+      s += `|null`;
+    }
+    s += "\n";
+    return s;
+  }
 }
 
 class VarAccessNode {
@@ -19,6 +32,12 @@ class VarAccessNode {
 
     this.pos_start = this.var_name_tok.pos_start;
     this.pos_end = this.var_name_tok.pos_end;
+  }
+  toString(indent = "") {
+    const newIndent = indent + "\t";
+    let s = `${indent}VarAccessNode\n`;
+    s += `${newIndent}|- ${this.var_name_tok.toString()}`;
+    return s;
   }
 }
 
@@ -141,8 +160,13 @@ class BinaryOperationNode {
     this.pos_end = this.right_node.pos_end;
   }
 
-  toString() {
-    return `(${this.left_node}, ${this.op_tok}, ${this.right_node})`;
+  toString(indent = "") {
+    const newIndent = indent + "\t";
+    let s = `${indent}Binary Operation Node\n`;
+    s += `${newIndent}|- Left: ${this.left_node instanceof BinaryOperationNode ? "\n" + this.left_node.toString(newIndent + "\t") : this.left_node.toString()}\n`;
+    s += `${newIndent}|- Operator: ${this.op_tok.toString()}\n`;
+    s += `${newIndent}|- Right: ${this.right_node instanceof BinaryOperationNode ? "\n" + this.right_node.toString(newIndent + "\t") : this.right_node.toString()}\n`;
+    return s;
   }
 }
 class PrintNode {
@@ -151,6 +175,14 @@ class PrintNode {
     this.pos_start = pos_start;
     this.pos_end = arg_nodes[arg_nodes.length - 1].pos_end;
   }
+
+  toString() {
+    let s = "PRINT NODE\n";
+    for (let node of this.arg_nodes) {
+      s += "|-" + node.toString() + "\n";
+    }
+    return s;
+  }
 }
 
 class InputNode {
@@ -158,6 +190,13 @@ class InputNode {
     this.var_toks = var_toks;
     this.pos_start = pos_start;
     this.pos_end = var_toks[var_toks.length - 1].pos_end;
+  }
+  toString() {
+    let s = "Input Node\n";
+    for (let tok of this.var_toks) {
+      s += "|-" + tok.toString() + "\n";
+    }
+    return s;
   }
 }
 

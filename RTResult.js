@@ -63,3 +63,4 @@ class RTResult {
 module.exports = {
   RTResult,
 };
+

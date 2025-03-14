@@ -1,0 +1,10 @@
+SUGOD
+    MUGNA NUMERO i = 0
+
+    SAMTANG (i < 100)PUNDOK{
+        IPAKITA: i  & " "
+        i++
+    }
+
+
+KATAPUSAN

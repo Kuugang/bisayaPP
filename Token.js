@@ -11,28 +11,28 @@ const TT_CONCAT = "CONCAT";
 
 const TT_IDENTIFIER = "IDENTIFIER";
 const TT_KEYWORD = "KEYWORD";
-const TT_PLUS = "PLUS";
-const TT_MINUS = "MINUS";
-const TT_MUL = "MUL";
-const TT_DIV = "DIV";
-const TT_MOD = "MOD";
-const TT_POW = "POW";
-const TT_EQ = "EQ";
-const TT_LPAREN = "LPAREN";
-const TT_RPAREN = "RPAREN";
-const TT_LBRACE = "LBRACE";
-const TT_RBRACE = "RBRACE";
-const TT_LSQUARE = "LSQUARE";
-const TT_RSQUARE = "RSQUARE";
-const TT_EE = "EE";
-const TT_NE = "NE";
-const TT_LT = "LT";
-const TT_GT = "GT";
-const TT_LTE = "LTE";
-const TT_GTE = "GTE";
-const TT_NOT = "TT_NOT";
-const TT_COMMA = "COMMA";
-const TT_ARROW = "ARROW";
+const TT_PLUS = "+";
+const TT_MINUS = "-";
+const TT_MUL = "*";
+const TT_DIV = "/";
+const TT_MOD = "%";
+const TT_POW = "**";
+const TT_EQ = "=";
+const TT_LPAREN = "(";
+const TT_RPAREN = ")";
+const TT_LBRACE = "{";
+const TT_RBRACE = "}";
+const TT_LSQUARE = "[";
+const TT_RSQUARE = "]";
+const TT_EE = "==";
+const TT_NE = "!=";
+const TT_LT = "<";
+const TT_GT = ">";
+const TT_LTE = "<=";
+const TT_GTE = ">=";
+const TT_NOT = "!";
+const TT_COMMA = ",";
+const TT_ARROW = "->";
 const TT_NEWLINE = "NEWLINE";
 const TT_EOF = "EOF";
 
@@ -89,9 +89,9 @@ class Token {
 
   toString() {
     if (this.value) {
-      return this.type + ":" + this.value;
+      const displayValue = this.value === "\n" ? "\\n" : this.value;
+      return this.type + ": " + displayValue;
     }
-    return this.type + ": ";
   }
 }
 
