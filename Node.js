@@ -1,5 +1,3 @@
-const { Token, TT_IDENTIFIER } = require("./Token");
-
 class VarAssignNode {
   constructor(type = null, var_name_tok, value_node = null) {
     this.type = type;

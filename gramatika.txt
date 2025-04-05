@@ -41,30 +41,32 @@
 
 <expr>                      -> <var-def>
                             | <var-assign>
-                            | <comp-expr> ((KEYWORD:AND|KEYWORD:OR) <comp-expr>)*
+                            | <concat-expr> ((KEYWORD:AND|KEYWORD:OR) <concat-expr>)*
 
 <var-def>                   -> KEYWORD: MUGNA KEYWORD: <datatype> var-assign
 
 <datatype>                  -> NUMERO | TIPIK | LETRA | PULONG | TINUOD
 
-var-assign                  -> IDENTIFIER (EQ IDENTIFIER)* (EQ <expr>)? (, (EQ IDENTIFIER)* (EQ <expr>)? )*
+<var-assign>                -> IDENTIFIER (EQ IDENTIFIER)* (EQ <expr>)? (, (EQ IDENTIFIER)* (EQ <expr>)? )*
 
-comp-expr                  -> KEYWORD:DILI <comp-expr>
-                            | <arith-expr> ((EE|LT|GT|LTE|GTE) <arith-expr>)*
+<concat-expr>               -> <comp-expr> (& <comp-expr> )*
+
+<comp-expr>                 -> KEYWORD:DILI <comp-expr>
+                            | <arith-expr> ((EE|NE|LT|GT|LTE|GTE) <arith-expr>)*
         
-arith-expr                  -> <term> ((PLUS|MINUS) <term>)*
+<arith-expr>                -> <term> ((PLUS|MINUS) <term>)*
 
-term                        -> <factor> ((MUL|DIV|%) <factor>)*
+<term>                      -> <factor> ((MUL|DIV|%) <factor>)*
 
-factor                      -> (PLUS|MINUS) <factor>
+<factor>                    -> (PLUS|MINUS) <factor>
                             | <power> (INCREMENT | DECREMENT)
                             | <power>
 
-power                       -> <call> (POW factor)*
+<power>                     -> <call> (POW factor)*
 
-call                        -> <atom> (LPAREN (<expr> (COMMA <expr>)*)? RPAREN)?
+<call>                      -> <atom> (LPAREN (<expr> (COMMA <expr>)*)? RPAREN)?
 
-atom                        -> INT|FLOAT|STRING|BOOL|IDENTIFIER
+<atom>                      -> INT|FLOAT|STRING|BOOL|IDENTIFIER #literals
                             | LPAREN <expr> RPAREN
                             | <list-expr>
                             | <func-def>

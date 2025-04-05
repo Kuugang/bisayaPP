@@ -20,6 +20,7 @@ const {
   TT_BOOLEAN,
   TT_DECREMENT,
   TT_INCREMENT,
+  TT_CONCAT,
 } = require("./Token.js");
 const { Char, String, Boolean, Number, List } = require("./Value.js");
 const { RTError, TypeError } = require("./Error.js");
@@ -194,6 +195,9 @@ class Interpreter {
           [result, error] = left.or(right);
           break;
         }
+      case TT_CONCAT:
+        [result, error] = left.concat(right);
+        break;
     }
 
     if (error) return res.failure(error);

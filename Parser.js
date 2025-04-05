@@ -1,4 +1,4 @@
-const { InvalidSyntaxError, TypeError, SemanticError } = require("./Error.js");
+const { InvalidSyntaxError, SemanticError } = require("./Error.js");
 const {
   CallNode,
   VarAssignNode,
@@ -23,9 +23,6 @@ const {
 } = require("./Node.js");
 const {
   Token,
-  KEYWORDS,
-  KEYWORD_PATTERN,
-
   TT_INT,
   TT_FLOAT,
   TT_LETRA,
@@ -42,8 +39,6 @@ const {
   TT_EQ,
   TT_LPAREN,
   TT_RPAREN,
-  TT_LSQUARE,
-  TT_RSQUARE,
   TT_EE,
   TT_NE,
   TT_LT,
@@ -51,13 +46,11 @@ const {
   TT_LTE,
   TT_GTE,
   TT_COMMA,
-  TT_ARROW,
   TT_NEWLINE,
   TT_EOF,
   TT_NOT,
   TT_LBRACE,
   TT_RBRACE,
-  TT_SEMICOLON,
   TT_INCREMENT,
   TT_DECREMENT,
   TT_COLON,
@@ -634,7 +627,7 @@ class Parser {
       this.reverse(res.advance_count);
     }
     let node = res.register(
-      this.bin_op(this.comp_expr, [
+      this.bin_op(this.concat_expr, [
         [TT_KEYWORD, "UG"],
         [TT_KEYWORD, "O"],
       ]),
@@ -822,6 +815,23 @@ class Parser {
     );
   };
 
+  concat_expr = () => {
+    let res = new ParseResult();
+    let node = res.register(this.bin_op(this.comp_expr, [TT_CONCAT]));
+
+    if (res.error) {
+      return res.failure(
+        new InvalidSyntaxError(
+          this.current_tok.pos_start,
+          this.current_tok.pos_end,
+          "Expected identifier, int, float, string, char, function, '+', '-', '(', '[' or 'DILI'",
+        ),
+      );
+    }
+
+    return res.success(node);
+  };
+
   comp_expr = () => {
     let res = new ParseResult();
     if (this.current_tok.type === TT_NOT) {
@@ -833,6 +843,7 @@ class Parser {
       if (res.error) return res;
       return res.success(new UnaryOperationNode(op_tok, node));
     }
+
     let node = res.register(
       this.bin_op(this.arith_expr, [
         TT_EE,
