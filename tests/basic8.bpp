@@ -1,0 +1,8 @@
+SUGOD
+    MUGNA PULONG text = "Hello"
+    MUGNA NUMERO value = text + 5
+KATAPUSAN
+
+-- PERFECT!
+-- rewrite ang error
+-- Line 3 : RuntimeError: Dili ni sha number binary

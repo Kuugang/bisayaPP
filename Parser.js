@@ -645,7 +645,7 @@ class Parser {
         new InvalidSyntaxError(
           this.current_tok.pos_start,
           this.current_tok.pos_end,
-          "Expected 'VAR', 'IF', 'FOR', 'WHILE', 'FUN', int, float, identifier, '+', '-', '(', '[' or 'NOT'",
+          "Expected identifier, int, float, string, char, function, '+', '-', '(', '[' or 'DILI'",
         ),
       );
     }
@@ -1019,7 +1019,7 @@ class Parser {
       new InvalidSyntaxError(
         tok.pos_start,
         tok.pos_end,
-        "Expected int, float, identifier, '+', '-', '(', '[', 'IF', 'FOR', 'WHILE' or 'FUN'",
+        "Expected identifier, int, float, string, char, boolean, '(', '['",
       ),
     );
   }

@@ -450,6 +450,10 @@ class Interpreter {
       let input = readlineSync.question();
 
       switch (value_node.type) {
+        case "PULONG":
+          value_node = new String(input);
+          break;
+
         case "LETRA":
           if (input.length > 1) {
             return res.failure(

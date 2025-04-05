@@ -1,0 +1,9 @@
+SUGOD
+    MUGNA NUMERO value = 100
+    MUGNA TINUOD isGreater = value > 50
+    MUGNA TINUOD isLess = value < 200
+    MUGNA TINUOD bothTrue = isGreater UG isLess
+    IPAKITA: bothTrue
+KATAPUSAN
+
+--PERFECT!

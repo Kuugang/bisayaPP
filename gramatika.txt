@@ -18,17 +18,17 @@
                             | <do-while-statement>
                             | <expr>
 
-<if-statement>              -> KEYWORD:KUNG LPAREN <compr-expr> LPAREN
+<if-statement>              -> KEYWORD:KUNG LPAREN <comp-expr> LPAREN
                             <block>
                             (<if-expr-b>|<if-expr-c>?)
 
-<if-statement-b>            -> KEYWORD:KUNG DILI LPAREN <compr-expr> RPAREN
+<if-statement-b>            -> KEYWORD:KUNG DILI LPAREN <comp-expr> RPAREN
                             <block>
                             (<if-expr-b>|<if-expr-c>?)
 
 <if-statement-c>            -> KEYWORD: KUNG WALA <block>
                             
-<for-statement>             -> KEYWORD: ALANG SA (IDENTIFIER | <var-def> | <var-assign> COMMA <compr-expr> COMMA <compr-expr>) block
+<for-statement>             -> KEYWORD: ALANG SA (IDENTIFIER | <var-def> | <var-assign> COMMA <comp-expr> COMMA <comp-expr>) block
 
 <while-statement>           -> KEYWORD: SAMTANG(<expr>) <block>
 
@@ -41,7 +41,7 @@
 
 <expr>                      -> <var-def>
                             | <var-assign>
-                            | <compr-expr> ((KEYWORD:AND|KEYWORD:OR) <compr-expr>)*
+                            | <comp-expr> ((KEYWORD:AND|KEYWORD:OR) <comp-expr>)*
 
 <var-def>                   -> KEYWORD: MUGNA KEYWORD: <datatype> var-assign
 
@@ -49,7 +49,7 @@
 
 var-assign                  -> IDENTIFIER (EQ IDENTIFIER)* (EQ <expr>)? (, (EQ IDENTIFIER)* (EQ <expr>)? )*
 
-compr-expr                  -> KEYWORD:DILI <compr-expr>
+comp-expr                  -> KEYWORD:DILI <comp-expr>
                             | <arith-expr> ((EE|LT|GT|LTE|GTE) <arith-expr>)*
         
 arith-expr                  -> <term> ((PLUS|MINUS) <term>)*

@@ -28,7 +28,7 @@ function run(fn, text) {
   let parser = new Parser(tokens);
   ast = parser.parse();
   if (ast.error) return [null, ast.error];
-  //visualize_tree(ast.node);
+  visualize_tree(ast.node);
 
   let interpreter = new Interpreter();
   let context = new Context("<program>");

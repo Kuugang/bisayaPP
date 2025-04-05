@@ -1,0 +1,8 @@
+SUGOD
+    MUGNA NUMERO x = 5
+    MUGNA NUMERO y = 10
+    MUGNA NUMERO result= x + y * 2
+    IPAKITA: result
+KATAPUSAN
+
+--good, perfect!
