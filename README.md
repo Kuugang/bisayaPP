@@ -133,7 +133,7 @@ IPAKITA: sum(3, 5)
 ### Operators
 
 - Arithmetic: `+`, `-`, `*`, `/`, `%`, `^`
-- Comparison: `==`, `!=`, `<`, `>`, `<=`, `>=`
+- Comparison: `==`, `<>` (NOT EQUAL), `<`, `>`, `<=`, `>=`
 - Logical: `UG` (AND), `O` (OR), `DILI` (NOT)
 
 ### Special Keywords
