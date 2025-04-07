@@ -29,6 +29,7 @@ const { RTResult } = require("./RTResult.js");
 
 var readlineSync = require("readline-sync");
 const { VarAccessNode, FuncDefNode } = require("./Node.js");
+const { SymbolTable } = require("./SymbolTable.js");
 
 const throwTypeError = (node, expected, received, context) => {
   return new RTResult().failure(
@@ -207,8 +208,8 @@ class Interpreter {
   visit_ForNode(node, context) {
     let res = new RTResult();
 
-    let new_context = new Context("<loop>", context, node.pos_start);
-    new_context.symbol_table = context.symbol_table;
+    let new_context = new Context(node.name, context, node.pos_start);
+    new_context.symbol_table = new SymbolTable(context.symbol_table);
 
     res.register(this.visit(node.initialization_node, new_context));
     if (res.error) return res;
@@ -227,7 +228,11 @@ class Interpreter {
         break;
       }
 
-      res.register(this.visit(node.body_node, new_context));
+      // res.register(this.visit(node.body_node, context));
+
+      for (let statement of node.body_node.statements) {
+        res.register(this.visit(statement, new_context));
+      }
 
       if (
         res.should_return() &&
@@ -251,8 +256,8 @@ class Interpreter {
   visit_WhileNode(node, context) {
     let res = new RTResult();
 
-    let new_context = new Context("<loop>", context, node.pos_start);
-    new_context.symbol_table = context.symbol_table;
+    let new_context = new Context(node.name, context, node.pos_start);
+    new_context.symbol_table = new SymbolTable(context.symbol_table);
 
     while (true) {
       let condition_node = res.register(
@@ -264,7 +269,9 @@ class Interpreter {
         break;
       }
 
-      res.register(this.visit(node.body_node, new_context));
+      for (let statement of node.body_node.statements) {
+        res.register(this.visit(statement, new_context));
+      }
 
       if (
         res.should_return() &&
@@ -327,9 +334,9 @@ class Interpreter {
       }
       return res.failure(
         new RTError(
-          variable.pos_start,
-          variable.pos_end,
-          `Variable '${var_name}' is previously defined here`,
+          node.pos_start,
+          node.pos_end,
+          `Variable '${var_name}' is previously defined`,
           context,
         ),
       );
@@ -523,7 +530,7 @@ class Interpreter {
     let value = null;
 
     let new_context = new Context(node.name, context, node.pos_start);
-    new_context.symbol_table = context.symbol_table;
+    new_context.symbol_table = new SymbolTable(context.symbol_table);
 
     for (let child of node.statements) {
       value = res.register(this.visit(child, new_context));

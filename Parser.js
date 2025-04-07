@@ -324,6 +324,12 @@ class Parser {
       return res.success(while_statement);
     }
 
+    if (tok.matches(TT_KEYWORD, "PUNDOK")) {
+      let block_statement = res.register(this.block());
+      if (res.error) return res;
+      return res.success(block_statement);
+    }
+
     let expr = res.register(this.expr());
     if (res.error) {
       return res.failure(
