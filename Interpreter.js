@@ -228,11 +228,7 @@ class Interpreter {
         break;
       }
 
-      // res.register(this.visit(node.body_node, context));
-
-      for (let statement of node.body_node.statements) {
-        res.register(this.visit(statement, new_context));
-      }
+      res.register(this.visit(node.body_node, new_context));
 
       if (
         res.should_return() &&
@@ -269,9 +265,7 @@ class Interpreter {
         break;
       }
 
-      for (let statement of node.body_node.statements) {
-        res.register(this.visit(statement, new_context));
-      }
+      res.register(this.visit(node.body_node, new_context));
 
       if (
         res.should_return() &&
@@ -310,17 +304,6 @@ class Interpreter {
     let var_name = node.var_name_tok.value;
     let variable = context.symbol_table.get(var_name);
 
-    if (variable === null && node.type === null) {
-      return res.failure(
-        new RTError(
-          node.pos_start,
-          node.pos_end,
-          `Variable '${var_name}' is not defined`,
-          context,
-        ),
-      );
-    }
-
     if (variable && node.type !== null && context === variable.context) {
       if (variable.node instanceof FuncDefNode) {
         return res.failure(
@@ -340,6 +323,25 @@ class Interpreter {
           context,
         ),
       );
+    }
+
+    if (variable === null && node.type === null) {
+      return res.failure(
+        new RTError(
+          node.pos_start,
+          node.pos_end,
+          `Variable '${var_name}' is not defined`,
+          context,
+        ),
+      );
+    }
+
+    if (
+      node.assign_type == "reassign" &&
+      variable &&
+      context !== variable.context
+    ) {
+      context = variable.context;
     }
 
     let value = null;
@@ -530,7 +532,11 @@ class Interpreter {
     let value = null;
 
     let new_context = new Context(node.name, context, node.pos_start);
-    new_context.symbol_table = new SymbolTable(context.symbol_table);
+    if (node.new_symbol_table) {
+      new_context.symbol_table = new SymbolTable(context.symbol_table);
+    } else {
+      new_context.symbol_table = context.symbol_table;
+    }
 
     for (let child of node.statements) {
       value = res.register(this.visit(child, new_context));

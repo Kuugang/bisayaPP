@@ -1,13 +1,7 @@
 SUGOD
     MUGNA NUMERO n=10, a=0, b=1, temp, ctr
-    MUGNA NUMERO d = 9999
-
     ALANG SA (ctr=1, ctr<=n, ctr++)
     PUNDOK{
-
-        IPAKITA: d
-
-        MUGNA NUMERO d = 2
         IPAKITA: a & ' '
         temp = a + b
         a = b

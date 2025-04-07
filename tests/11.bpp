@@ -1,0 +1,43 @@
+--#include <iostream>
+--
+--int main() {
+--    int a = 0;
+--    
+--    {
+--        std::cout << a;
+--        int a = 99;
+--        std::cout << a;
+--    }
+--    int i = 2;
+--    for(int i = 0; i  < 10; i++){
+--        int a = i;
+--        std::cout << " " << a;
+--    }
+--    std::cout << std::endl; 
+--    std::cout << a;
+--    return 0;
+--}
+
+SUGOD
+    MUGNA NUMERO a = 5, b
+
+    PUNDOK{
+        a = b = 200
+        MUGNA NUMERO a = 69
+        IPAKITA: a & $
+        --SHOULD OUTPUT 69
+    }
+
+    IPAKITA: a & $
+    --SHOULD OUTPUT 200
+
+    ALANG SA (MUGNA NUMERO i = 0, i < 10, i++)
+    PUNDOK{
+        MUGNA NUMERO a = i
+        IPAKITA: a & " "
+    }
+
+    IPAKITA: $ & a & " "
+    --SHOULD OUTPUT 200
+
+KATAPUSAN
