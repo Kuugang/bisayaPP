@@ -28,7 +28,7 @@ const { Context } = require("./Context.js");
 const { RTResult } = require("./RTResult.js");
 
 var readlineSync = require("readline-sync");
-const { VarAccessNode, FuncDefNode } = require("./Node.js");
+const { VarAccessNode, FuncDefNode, CallNode } = require("./Node.js");
 const { SymbolTable } = require("./SymbolTable.js");
 
 const throwTypeError = (node, expected, received, context) => {
@@ -207,7 +207,6 @@ class Interpreter {
 
   visit_ForNode(node, context) {
     let res = new RTResult();
-
     let new_context = new Context(node.name, context, node.pos_start);
     new_context.symbol_table = new SymbolTable(context.symbol_table);
 
@@ -303,18 +302,23 @@ class Interpreter {
     let res = new RTResult();
     let var_name = node.var_name_tok.value;
     let variable = context.symbol_table.get(var_name);
+    let value = null;
 
-    if (variable && node.type !== null && context === variable.context) {
-      if (variable.node instanceof FuncDefNode) {
-        return res.failure(
-          new RTError(
-            node.value_node.pos_start,
-            node.value_node.pos_end,
-            `${var_name} cannot be used as a function`,
-            context,
-          ),
-        );
-      }
+    if (node.value_node && node.value_node instanceof CallNode) {
+      return res.failure(
+        new RTError(
+          node.value_node.pos_start,
+          node.value_node.pos_end,
+          `${node.value_node.node_to_call.var_name_tok.value} cannot be used as a function`,
+          context,
+        ),
+      );
+    }
+
+    if (
+      node.type === "definition" &&
+      context.symbol_table.get_current(var_name)
+    ) {
       return res.failure(
         new RTError(
           node.pos_start,
@@ -325,26 +329,23 @@ class Interpreter {
       );
     }
 
-    if (variable === null && node.type === null) {
-      return res.failure(
-        new RTError(
-          node.pos_start,
-          node.pos_end,
-          `Variable '${var_name}' is not defined`,
-          context,
-        ),
-      );
+    if (node.assign_type === "reassign") {
+      if (context.symbol_table.get_current(var_name) === null) {
+        context = context.parent;
+      }
+
+      if (variable === null) {
+        return res.failure(
+          new RTError(
+            node.pos_start,
+            node.pos_end,
+            `Variable '${var_name}' is not defined`,
+            context,
+          ),
+        );
+      }
     }
 
-    if (
-      node.assign_type == "reassign" &&
-      variable &&
-      context !== variable.context
-    ) {
-      context = variable.context;
-    }
-
-    let value = null;
     if (node.value_node) {
       value = res.register(this.visit(node.value_node, context));
       if (res.should_return()) return res;

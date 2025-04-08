@@ -10,6 +10,11 @@ class SymbolTable {
     return value;
   }
 
+  get_current(name) {
+    let value = this.symbols[name] ?? null;
+    return value;
+  }
+
   set(name, value) {
     this.symbols[name] = value;
   }
