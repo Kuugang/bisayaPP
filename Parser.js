@@ -397,7 +397,6 @@ class Parser {
       args.push(res.register(this.expr()));
       if (res.error) return res;
     }
-
     return res.success(new PrintNode(pos_start, args));
   };
 
@@ -842,7 +841,7 @@ class Parser {
 
   comp_expr = () => {
     let res = new ParseResult();
-    if (this.current_tok.type === TT_NOT) {
+    if (this.current_tok.matches(TT_KEYWORD, "DILI")) {
       let op_tok = this.current_tok;
       res.register_advancement();
       this.advance();
@@ -989,15 +988,10 @@ class Parser {
     } else if (this.current_tok.type === TT_STRING) {
       res.register_advancement();
       this.advance();
+      if (["OO", "DILI"].includes(tok.value)) {
+        return res.success(new BooleanNode(tok));
+      }
       return res.success(new StringNode(tok));
-    } else if (this.current_tok.matches(TT_KEYWORD, "OO")) {
-      res.register_advancement();
-      this.advance();
-      return res.success(new BooleanNode(tok));
-    } else if (this.current_tok.matches(TT_KEYWORD, "DILI")) {
-      res.register_advancement();
-      this.advance();
-      return res.success(new BooleanNode(tok));
     } else if (this.current_tok.type === TT_IDENTIFIER) {
       res.register_advancement();
       this.advance();

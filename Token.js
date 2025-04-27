@@ -30,7 +30,6 @@ const TT_LT = "<";
 const TT_GT = ">";
 const TT_LTE = "<=";
 const TT_GTE = ">=";
-const TT_NOT = "!";
 const TT_COMMA = ",";
 const TT_ARROW = "->";
 const TT_NEWLINE = "NEWLINE";
@@ -47,8 +46,8 @@ const KEYWORDS = [
   "TIPIK", //FLOAT
   "UG", //AND
   "O", //OR
-  "DILI", //FALSE
-  "OO", //TRUE
+  "DILI", //NOT
+  //"OO", //TRUE
   "KUNG", //IF
   "KUNG DILI", //ELSE IF
   "KUNG WALA", //ELSE
@@ -129,7 +128,6 @@ module.exports = {
   TT_GT,
   TT_LTE,
   TT_GTE,
-  TT_NOT,
   TT_COMMA,
   TT_ARROW,
   TT_NEWLINE,

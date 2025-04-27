@@ -1,0 +1,15 @@
+SUGOD
+    MUGNA NUMERO x = 100
+    MUGNA NUMERO a = 100
+
+
+    x = 1, a = 3
+    IPAKITA: a & $
+
+    ALANG SA (MUGNA NUMERO i = 10, i > 0, i--)
+    PUNDOK{
+        IPAKITA: x & $
+        x = x / i
+    }
+
+KATAPUSAN

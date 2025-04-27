@@ -11,7 +11,7 @@ SUGOD
 
     DAWAT: a, b
 
-    IPAKITA: a & " " & b
+    IPAKITA: (a + 2 + a / 2) + a & " " & b
 
 
 

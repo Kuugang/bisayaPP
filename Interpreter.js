@@ -103,7 +103,7 @@ class Interpreter {
 
     if (node.op_tok.type == TT_MINUS) {
       [number, error] = number.multiply(new Number(-1));
-    } else if (node.op_tok.type == TT_NOT) {
+    } else if (node.op_tok.matches(TT_KEYWORD, "DILI")) {
       [number, error] = number.notted();
     }
 
@@ -208,7 +208,7 @@ class Interpreter {
   visit_ForNode(node, context) {
     let res = new RTResult();
     let new_context = new Context(node.name, context, node.pos_start);
-    new_context.symbol_table = new SymbolTable(context.symbol_table);
+    new_context.symbol_table = context.symbol_table;
 
     res.register(this.visit(node.initialization_node, new_context));
     if (res.error) return res;
@@ -252,8 +252,7 @@ class Interpreter {
     let res = new RTResult();
 
     let new_context = new Context(node.name, context, node.pos_start);
-    new_context.symbol_table = new SymbolTable(context.symbol_table);
-
+    new_context.symbol_table = context.symbol_table;
     while (true) {
       let condition_node = res.register(
         this.visit(node.condition_node, new_context),
