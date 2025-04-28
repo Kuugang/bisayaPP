@@ -31,6 +31,11 @@ class Value {
   divide(other) {
     return [null, this.illegal_operation(other)];
   }
+
+  concat(other) {
+    return [new String(this.value + "" + other.value), null];
+  }
+
   power(other) {
     return [null, this.illegal_operation(other)];
   }

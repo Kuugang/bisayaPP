@@ -6,7 +6,6 @@ const { Interpreter } = require("./Interpreter.js");
 const { Context } = require("./Context.js");
 const { SymbolTable } = require("./SymbolTable.js");
 
-//const prompt = require("prompt-sync")();
 const args = process.argv;
 
 if (args[2] === undefined) {
@@ -28,13 +27,14 @@ function run(fn, text) {
   let parser = new Parser(tokens);
   ast = parser.parse();
   if (ast.error) return [null, ast.error];
-  //visualize_tree(ast.node);
+  // visualize_tree(ast.node);
 
   let interpreter = new Interpreter();
   let context = new Context("<program>");
   context.symbol_table = global_symbol_table;
 
   result = interpreter.visit(ast.node, context);
+  if (!result.error) console.log("\nNO ERROR");
   return [result.value, result.error];
 }
 
@@ -52,19 +52,6 @@ fs.readFile(file_name, "utf8", (err, script) => {
     // else console.log(String(result));
   }
 });
-
-// while (true) {
-//   let text = prompt("Bisaya ni bai> ");
-//   const [result, error] = run("<program>", text);
-//
-//   if (error) {
-//     console.log(error.as_string());
-//   } else {
-//     // console.log(result.join("\n"));
-//     console.log(result);
-//   }
-// }
-//
 
 function visualize_tree(node) {
   for (let a of node.element_nodes) {

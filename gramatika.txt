@@ -18,17 +18,17 @@
                             | <do-while-statement>
                             | <expr>
 
-<if-statement>              -> KEYWORD:KUNG LPAREN <compr-expr> LPAREN
+<if-statement>              -> KEYWORD:KUNG LPAREN <comp-expr> LPAREN
                             <block>
                             (<if-expr-b>|<if-expr-c>?)
 
-<if-statement-b>            -> KEYWORD:KUNG DILI LPAREN <compr-expr> RPAREN
+<if-statement-b>            -> KEYWORD:KUNG DILI LPAREN <comp-expr> RPAREN
                             <block>
                             (<if-expr-b>|<if-expr-c>?)
 
 <if-statement-c>            -> KEYWORD: KUNG WALA <block>
                             
-<for-statement>             -> KEYWORD: ALANG SA (IDENTIFIER | <var-def> | <var-assign> COMMA <compr-expr> COMMA <compr-expr>) block
+<for-statement>             -> KEYWORD: ALANG SA (IDENTIFIER | <var-def> | <var-assign> COMMA <comp-expr> COMMA <comp-expr>) block
 
 <while-statement>           -> KEYWORD: SAMTANG(<expr>) <block>
 
@@ -41,30 +41,32 @@
 
 <expr>                      -> <var-def>
                             | <var-assign>
-                            | <compr-expr> ((KEYWORD:AND|KEYWORD:OR) <compr-expr>)*
+                            | <concat-expr> ((KEYWORD:AND|KEYWORD:OR) <concat-expr>)*
 
 <var-def>                   -> KEYWORD: MUGNA KEYWORD: <datatype> var-assign
 
 <datatype>                  -> NUMERO | TIPIK | LETRA | PULONG | TINUOD
 
-var-assign                  -> IDENTIFIER (EQ IDENTIFIER)* (EQ <expr>)? (, (EQ IDENTIFIER)* (EQ <expr>)? )*
+<var-assign>                -> IDENTIFIER (EQ IDENTIFIER)* (EQ <expr>)? (, (EQ IDENTIFIER)* (EQ <expr>)? )*
 
-compr-expr                  -> KEYWORD:DILI <compr-expr>
-                            | <arith-expr> ((EE|LT|GT|LTE|GTE) <arith-expr>)*
+<concat-expr>               -> <comp-expr> (& <comp-expr> )*
+
+<comp-expr>                 -> KEYWORD:DILI <comp-expr>
+                            | <arith-expr> ((EE|NE|LT|GT|LTE|GTE) <arith-expr>)*
         
-arith-expr                  -> <term> ((PLUS|MINUS) <term>)*
+<arith-expr>                -> <term> ((PLUS|MINUS) <term>)*
 
-term                        -> <factor> ((MUL|DIV|%) <factor>)*
+<term>                      -> <factor> ((MUL|DIV|%) <factor>)*
 
-factor                      -> (PLUS|MINUS) <factor>
+<factor>                    -> (PLUS|MINUS) <factor>
                             | <power> (INCREMENT | DECREMENT)
                             | <power>
 
-power                       -> <call> (POW factor)*
+<power>                     -> <call> (POW factor)*
 
-call                        -> <atom> (LPAREN (<expr> (COMMA <expr>)*)? RPAREN)?
+<call>                      -> <atom> (LPAREN (<expr> (COMMA <expr>)*)? RPAREN)?
 
-atom                        -> INT|FLOAT|STRING|BOOL|IDENTIFIER
+<atom>                      -> INT|FLOAT|STRING|BOOL|IDENTIFIER #literals
                             | LPAREN <expr> RPAREN
                             | <list-expr>
                             | <func-def>

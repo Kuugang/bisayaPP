@@ -1,0 +1,16 @@
+SUGOD
+    MUGNA NUMERO x = 5
+
+    MUGNA NUMERO y = 0
+
+    ALANG SA (MUGNA NUMERO i = 0, i < x, i++)
+    PUNDOK{
+        ALANG SA (MUGNA NUMERO j = 0, j < x, j++)
+        PUNDOK{
+            y = i + j
+            IPAKITA: y
+        }
+        IPAKITA: $
+    }
+    IPAKITA: $ & "SHOULD OUTPUT 8: " & y
+KATAPUSAN

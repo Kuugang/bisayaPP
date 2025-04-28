@@ -1,0 +1,6 @@
+SUGOD
+    MUGNA NUMERO result = undefinedVar + 5
+KATAPUSAN
+
+-- perfect! pero i rewrite ang error
+-- Line 2 : RuntimeError: Wala na ilhi na variable 'Undefined variable 'undefinedVar''

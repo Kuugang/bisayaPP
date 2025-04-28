@@ -1,8 +1,7 @@
-const { Token, TT_IDENTIFIER } = require("./Token");
-
 class VarAssignNode {
-  constructor(type = null, var_name_tok, value_node = null) {
+  constructor(type = null, assign_type, var_name_tok, value_node = null) {
     this.type = type;
+    this.assign_type = assign_type;
     this.var_name_tok = var_name_tok;
     this.value_node = value_node;
 
@@ -119,6 +118,7 @@ class ForNode {
     body_node,
     should_return_null,
   ) {
+    this.name = "<for loop>";
     this.initialization_node = initialization_node;
 
     this.condition_node = condition_node;
@@ -133,6 +133,7 @@ class ForNode {
 
 class WhileNode {
   constructor(condition_node, body_node) {
+    this.name = "<while loop>";
     this.condition_node = condition_node;
     this.body_node = body_node;
     this.pos_start = this.condition_node.pos_start;
@@ -201,11 +202,12 @@ class InputNode {
 }
 
 class Block {
-  constructor(statements, name = "<block>", pos_start, pos_end) {
+  constructor(statements, pos_start, pos_end, new_context = false) {
+    this.name = "<block>";
     this.statements = statements;
-    this.name = name;
     this.pos_start = pos_start;
     this.pos_end = pos_end;
+    this.new_context = new_context;
   }
 }
 

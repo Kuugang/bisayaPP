@@ -1,0 +1,8 @@
+SUGOD
+    MUGNA NUMERO a = 5
+    MUGNA NUMERO b = 10
+    MUGNA NUMERO c = 15
+    MUGNA NUMERO sum = a + b + c
+    MUGNA TIPIK average = sum / 3.0
+    IPAKITA: "Ang average kay " & average
+KATAPUSAN

@@ -1,4 +1,4 @@
-const { InvalidSyntaxError, TypeError, SemanticError } = require("./Error.js");
+const { InvalidSyntaxError, SemanticError } = require("./Error.js");
 const {
   CallNode,
   VarAssignNode,
@@ -23,9 +23,6 @@ const {
 } = require("./Node.js");
 const {
   Token,
-  KEYWORDS,
-  KEYWORD_PATTERN,
-
   TT_INT,
   TT_FLOAT,
   TT_LETRA,
@@ -42,8 +39,6 @@ const {
   TT_EQ,
   TT_LPAREN,
   TT_RPAREN,
-  TT_LSQUARE,
-  TT_RSQUARE,
   TT_EE,
   TT_NE,
   TT_LT,
@@ -51,13 +46,11 @@ const {
   TT_LTE,
   TT_GTE,
   TT_COMMA,
-  TT_ARROW,
   TT_NEWLINE,
   TT_EOF,
   TT_NOT,
   TT_LBRACE,
   TT_RBRACE,
-  TT_SEMICOLON,
   TT_INCREMENT,
   TT_DECREMENT,
   TT_COLON,
@@ -331,6 +324,12 @@ class Parser {
       return res.success(while_statement);
     }
 
+    if (tok.matches(TT_KEYWORD, "PUNDOK")) {
+      let block_statement = res.register(this.block(true));
+      if (res.error) return res;
+      return res.success(block_statement);
+    }
+
     let expr = res.register(this.expr());
     if (res.error) {
       return res.failure(
@@ -398,7 +397,6 @@ class Parser {
       args.push(res.register(this.expr()));
       if (res.error) return res;
     }
-
     return res.success(new PrintNode(pos_start, args));
   };
 
@@ -501,7 +499,7 @@ class Parser {
       res.register_advancement();
       this.advance();
 
-      init_node = res.register(this.var_assign(var_name, null, 1));
+      init_node = res.register(this.var_assign(var_name, "reassign", null, 1));
       if (res.error) return res;
     } else {
       init_node = res.register(this.expr());
@@ -557,7 +555,7 @@ class Parser {
     )
       return res;
 
-    let body = res.register(this.block("<loop>"));
+    let body = res.register(this.block());
     if (res.error) return res;
 
     return res.success(
@@ -605,7 +603,7 @@ class Parser {
     )
       return res;
 
-    let body = res.register(this.block("<loop>"));
+    let body = res.register(this.block());
     if (res.error) return res;
 
     return res.success(new WhileNode(condition, body));
@@ -627,14 +625,16 @@ class Parser {
       this.advance();
 
       if (this.current_tok.type === TT_EQ) {
-        let var_assignment = res.register(this.var_assign(var_name));
+        let var_assignment = res.register(
+          this.var_assign(var_name, "reassign"),
+        );
         if (res.error) return res;
         return res.success(var_assignment);
       }
       this.reverse(res.advance_count);
     }
     let node = res.register(
-      this.bin_op(this.comp_expr, [
+      this.bin_op(this.concat_expr, [
         [TT_KEYWORD, "UG"],
         [TT_KEYWORD, "O"],
       ]),
@@ -645,7 +645,7 @@ class Parser {
         new InvalidSyntaxError(
           this.current_tok.pos_start,
           this.current_tok.pos_end,
-          "Expected 'VAR', 'IF', 'FOR', 'WHILE', 'FUN', int, float, identifier, '+', '-', '(', '[' or 'NOT'",
+          "Expected identifier, int, float, string, char, function, '+', '-', '(', '[' or 'DILI'",
         ),
       );
     }
@@ -717,10 +717,10 @@ class Parser {
 
     let var_name = this.peek(-1);
 
-    return this.var_assign(var_name, type, count);
+    return this.var_assign(var_name, "definition", type, count);
   };
 
-  var_assign = (var_name, type = null, count = null) => {
+  var_assign = (var_name, assign_type, type = null, count = null) => {
     let res = new ParseResult();
     let toks = [var_name];
     let value = null;
@@ -752,15 +752,15 @@ class Parser {
     }
 
     if (this.current_tok.type !== TT_COMMA) {
-      return res.success(new VarAssignNode(type, var_name, value));
+      return res.success(new VarAssignNode(type, assign_type, var_name, value));
     }
 
     let nodes = [];
 
-    nodes.push(new VarAssignNode(type, var_name, value));
+    nodes.push(new VarAssignNode(type, assign_type, var_name, value));
 
     for (let i = 1; i < toks.length - 1; i++) {
-      nodes.push(new VarAssignNode(type, toks[i], value));
+      nodes.push(new VarAssignNode(type, assign_type, toks[i], value));
     }
 
     while (this.current_tok.type === TT_COMMA) {
@@ -810,10 +810,10 @@ class Parser {
         toks.push(value.var_name_tok);
       }
 
-      nodes.push(new VarAssignNode(type, var_name, value));
+      nodes.push(new VarAssignNode(type, assign_type, var_name, value));
 
       for (let i = 1; i < toks.length - 1; i++) {
-        nodes.push(new VarAssignNode(type, toks[i], value));
+        nodes.push(new VarAssignNode(type, assign_type, toks[i], value));
       }
     }
 
@@ -822,9 +822,26 @@ class Parser {
     );
   };
 
+  concat_expr = () => {
+    let res = new ParseResult();
+    let node = res.register(this.bin_op(this.comp_expr, [TT_CONCAT]));
+
+    if (res.error) {
+      return res.failure(
+        new InvalidSyntaxError(
+          this.current_tok.pos_start,
+          this.current_tok.pos_end,
+          "Expected identifier, int, float, string, char, function, '+', '-', '(', '[' or 'DILI'",
+        ),
+      );
+    }
+
+    return res.success(node);
+  };
+
   comp_expr = () => {
     let res = new ParseResult();
-    if (this.current_tok.type === TT_NOT) {
+    if (this.current_tok.matches(TT_KEYWORD, "DILI")) {
       let op_tok = this.current_tok;
       res.register_advancement();
       this.advance();
@@ -833,6 +850,7 @@ class Parser {
       if (res.error) return res;
       return res.success(new UnaryOperationNode(op_tok, node));
     }
+
     let node = res.register(
       this.bin_op(this.arith_expr, [
         TT_EE,
@@ -970,15 +988,10 @@ class Parser {
     } else if (this.current_tok.type === TT_STRING) {
       res.register_advancement();
       this.advance();
+      if (["OO", "DILI"].includes(tok.value)) {
+        return res.success(new BooleanNode(tok));
+      }
       return res.success(new StringNode(tok));
-    } else if (this.current_tok.matches(TT_KEYWORD, "OO")) {
-      res.register_advancement();
-      this.advance();
-      return res.success(new BooleanNode(tok));
-    } else if (this.current_tok.matches(TT_KEYWORD, "DILI")) {
-      res.register_advancement();
-      this.advance();
-      return res.success(new BooleanNode(tok));
     } else if (this.current_tok.type === TT_IDENTIFIER) {
       res.register_advancement();
       this.advance();
@@ -1034,7 +1047,7 @@ class Parser {
       new InvalidSyntaxError(
         tok.pos_start,
         tok.pos_end,
-        "Expected int, float, identifier, '+', '-', '(', '[', 'IF', 'FOR', 'WHILE' or 'FUN'",
+        "Expected identifier, int, float, string, char, boolean, '(', '['",
       ),
     );
   }
@@ -1212,7 +1225,7 @@ class Parser {
       res.register_advancement();
       this.advance();
     }
-    let body = res.register(this.block(func_name_token.value));
+    let body = res.register(this.block());
     if (res.error) return res;
 
     return res.success(
@@ -1220,7 +1233,7 @@ class Parser {
     );
   }
 
-  block(name) {
+  block(new_symbol_table = false) {
     let res = new ParseResult();
     let statements = [];
     let pos_start = this.current_tok.pos_start.copy();
@@ -1311,7 +1324,12 @@ class Parser {
       return res;
 
     return res.success(
-      new Block(statements, name, pos_start, this.current_tok.pos_end.copy()),
+      new Block(
+        statements,
+        pos_start,
+        this.current_tok.pos_end.copy(),
+        new_symbol_table,
+      ),
     );
   }
 

@@ -15,12 +15,9 @@ const {
   TT_MUL,
   TT_DIV,
   TT_MOD,
-  TT_POW,
   TT_EQ,
   TT_LPAREN,
   TT_RPAREN,
-  TT_LSQUARE,
-  TT_RSQUARE,
   TT_EE,
   TT_NE,
   TT_LT,
@@ -29,7 +26,6 @@ const {
   TT_GTE,
   TT_NOT,
   TT_COMMA,
-  TT_ARROW,
   TT_NEWLINE,
   TT_EOF,
   TT_LBRACE,
@@ -77,7 +73,7 @@ class Lexer {
         tokens.push(new Token(TT_COLON, null, this.pos, null));
         this.advance();
       } else if (this.current_char == "&") {
-        tokens.push(new Token(TT_CONCAT, null, this.pos, null));
+        tokens.push(new Token(TT_CONCAT, "&", this.pos, null));
         this.advance();
       } else if (['"', "'"].includes(this.current_char)) {
         const [result, error] = this.make_string_or_symbol();
@@ -275,6 +271,17 @@ class Lexer {
       }
       id_str += this.current_char;
       this.advance();
+    }
+
+    if (open == "'" && id_str.length > 1) {
+      return [
+        null,
+        new InvalidSyntaxError(
+          pos_start,
+          this.pos,
+          `multi-character literal inside single quotes: '${id_str}' with ${id_str.length} characters,  Use double quotes (\") for strings.`,
+        ),
+      ];
     }
 
     this.advance();
