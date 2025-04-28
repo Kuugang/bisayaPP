@@ -198,6 +198,10 @@ class Boolean extends Value {
     }
   }
 
+  is_true() {
+    return this.value === "OO" ? true : false;
+  }
+
   copy() {
     let copy = new Boolean(this.value);
     copy.set_pos(this.pos_start, this.pos_end);
@@ -402,6 +406,7 @@ class Number extends Value {
     copy.set_context(this.context);
     return copy;
   }
+
   is_true() {
     return this.value != 0;
   }

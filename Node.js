@@ -186,6 +186,18 @@ class PrintNode {
   }
 }
 
+class IfNode {
+  constructor(cases, else_case) {
+    this.cases = cases;
+    this.else_case = else_case;
+    this.pos_start = cases[0][0].pos_start;
+    this.pos_end =
+      this.else_case !== undefined
+        ? else_case.pos_end
+        : this.cases[this.cases.length - 1][0].pos_end;
+  }
+}
+
 class InputNode {
   constructor(pos_start, var_toks) {
     this.var_toks = var_toks;
@@ -267,6 +279,7 @@ module.exports = {
   ListNode,
   BinaryOperationNode,
   PrintNode,
+  IfNode,
   InputNode,
   Block,
   BreakNode,

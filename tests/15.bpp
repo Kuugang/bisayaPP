@@ -1,0 +1,26 @@
+SUGOD
+    MUGNA TINUOD a = DILI "OO"
+
+    KUNG(DILI DILI a)PUNDOK{
+        IPAKITA: "1"
+
+        KUNG (a) PUNDOK {
+            IPAKITA: " 1"
+        }
+
+    }
+
+    KUNG DILI(1 == 2)PUNDOK{
+        IPAKITA: "2"
+    }
+    KUNG DILI("DILI" == "OO")PUNDOK{
+        IPAKITA: "3"
+    } 
+
+    KUNG WALA PUNDOK{
+        IPAKITA: "4"
+    }
+
+
+
+KATAPUSAN

@@ -485,6 +485,27 @@ class Interpreter {
     return res.success(new Number(0));
   }
 
+  visit_IfNode(node, context) {
+    let res = new RTResult();
+    let cases = node.cases;
+
+    for (let c of cases) {
+      let value = res.register(this.visit(c[0], context));
+      if (res.should_return()) return res;
+
+      if (value.is_true()) {
+        res.register(this.visit(c[1], context));
+        if (res.should_return()) return res;
+        return res.success(new Number(0));
+      }
+    }
+    if (node.else_case) {
+      res.register(this.visit(node.else_case, context));
+      if (res.should_return()) return res;
+    }
+    return res.success(new Number(0));
+  }
+
   visit_InputNode(node, context) {
     let res = new RTResult();
     let var_toks = node.var_toks;
