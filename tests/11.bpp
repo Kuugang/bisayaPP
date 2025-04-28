@@ -32,7 +32,7 @@ SUGOD
 
     ALANG SA (MUGNA NUMERO i = 0, i < 10, i++)
     PUNDOK{
-        MUGNA NUMERO a = i
+        MUGNA NUMERO i = 0
         IPAKITA: a & " "
     }
 

@@ -200,8 +200,9 @@ class Parser {
         InvalidSyntaxError,
         null,
       ).error
-    )
+    ) {
       return res;
+    }
 
     this.advance();
 
@@ -1086,14 +1087,13 @@ class Parser {
     )
       return res;
 
-    let if_body = res.register(this.block());
+    let if_body = res.register(this.block(true));
     if (res.error) return res;
 
     let cases = [];
     cases.push([condition_node, if_body]);
 
     this.skip_new_lines(res);
-
     if (this.current_tok.matches(TT_KEYWORD, "KUNG DILI")) {
       let elif_cases = res.register(this.if_statement_b());
       if (res.error) return res;
@@ -1108,7 +1108,10 @@ class Parser {
       this.advance();
       else_case = res.register(this.block());
       if (res.error) return res;
+      this.skip_new_lines(res);
     }
+
+    this.reverse(1);
 
     return res.success(new IfNode(cases, else_case));
   }
