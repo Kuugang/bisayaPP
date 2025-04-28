@@ -202,12 +202,12 @@ class InputNode {
 }
 
 class Block {
-  constructor(statements, pos_start, pos_end, new_symbol_table = false) {
+  constructor(statements, pos_start, pos_end, new_context = false) {
     this.name = "<block>";
     this.statements = statements;
     this.pos_start = pos_start;
     this.pos_end = pos_end;
-    this.new_symbol_table = new_symbol_table;
+    this.new_context = new_context;
   }
 }
 

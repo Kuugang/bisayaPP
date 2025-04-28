@@ -12,5 +12,5 @@ SUGOD
         }
         IPAKITA: $
     }
-    IPAKITA: y
+    IPAKITA: $ & "SHOULD OUTPUT 8: " & y
 KATAPUSAN

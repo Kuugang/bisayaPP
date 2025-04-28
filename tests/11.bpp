@@ -28,8 +28,7 @@ SUGOD
         --SHOULD OUTPUT 69
     }
 
-    IPAKITA: a & $
-    --SHOULD OUTPUT 200
+    IPAKITA: "SHOULD OUTPUT 200: " & a & $
 
     ALANG SA (MUGNA NUMERO i = 0, i < 10, i++)
     PUNDOK{
@@ -37,7 +36,6 @@ SUGOD
         IPAKITA: a & " "
     }
 
-    IPAKITA: $ & a & " "
-    --SHOULD OUTPUT 200
+    IPAKITA: $ & "SHOULD OUTPUT 200: " & a & " "
 
 KATAPUSAN
