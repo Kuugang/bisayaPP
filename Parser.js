@@ -1013,6 +1013,21 @@ class Parser {
           new Token(TT_LETRA, "\n", tok.pos_start.copy(), tok.pos_end.copy()),
         ),
       );
+    } else if(tok.matches(TT_KEYWORD, ("KUNG"))){
+      if_expr = res.register(self.if_expr);
+      if(res.error) {
+          // new CharNode(
+          //   new Token(TT_LETRA, "\n", tok.pos_start.copy(), tok.pos_end.copy())
+          // )
+      } else {
+        return res.failure(
+          new InvalidSyntaxError(
+            this.current_tok.pos_start,
+            this.current_tok.pos_end,
+            "Expected ')'",
+          ),
+        );
+      }
     }
 
     return res.failure(
@@ -1023,6 +1038,76 @@ class Parser {
       ),
     );
   }
+
+  // idk i just have it here. sorry, naglahi ko kay ako gi-take in consideration sa kung wala but idon't know if sakto ra ba
+  // atom(){
+  //   let res = new ParseResult();
+
+  //   let tok = this.current_tok;
+  //   // if ([TT_KEYWORD, TT_LETRA].includes(tok.type)){
+  //   //   res.register_advancement();
+  //   //   this.advance();
+  //   //   return res.success(new CharNode(tok, tok.type));
+  //   // } 
+
+  //   if(tok.matches(TT_KEYWORD, ("KUNG"))){
+
+  //     if_expr = res.register(self.if_expr);
+  //     if (tok.type == TT_LPAREN) {
+  //       res.register_advancement();
+  //       this.advance();
+  //       let expr = res.register(this.expr());
+  //       if (res.error) return res;
+  //       if (this.current_tok.type == TT_RPAREN) {
+  //         res.register_advancement();
+  //         this.advance();
+  //         return res.success(expr);
+  //       } else {
+  //         return res.failure(
+  //           new InvalidSyntaxError(
+  //             this.current_tok.pos_start,
+  //             this.current_tok.pos_end,
+  //             "Expected ')'",
+  //           ),
+  //         );
+  //       }
+  //     } else if(res.error) {
+  //         // new CharNode(
+  //         //   new Token(TT_LETRA, "\n", tok.pos_start.copy(), tok.pos_end.copy())
+  //         // )
+  //     } else {
+  //       return res.failure(
+  //         new InvalidSyntaxError(
+  //           this.current_tok.pos_start,
+  //           this.current_tok.pos_end,
+  //           "Expected ')'",
+  //         ),
+  //       );
+  //     }
+  //   } else if(tok.matches(TT_KEYWORD, ("KUNG", "WALA"))){
+  //     if_expr = res.register(self.if_expr);
+  //     if(res.error) {
+  //         // new CharNode(
+  //         //   new Token(TT_LETRA, "\n", tok.pos_start.copy(), tok.pos_end.copy())
+  //         // )
+  //     } else {
+  //       return res.failure(
+  //         new InvalidSyntaxError(
+  //           this.current_tok.pos_start,
+  //           this.current_tok.pos_end,
+  //           "Expected ')'",
+  //         ),
+  //       );
+  //     }
+  //   }
+  //   return res.failure(
+  //     new InvalidSyntaxError(
+  //       tok.pos_start,
+  //       tok.pos_end,
+  //       "Expected int, float, identifier, '+', '-', '(', '[', 'IF', 'FOR', 'WHILE' or 'FUN'",
+  //     ),
+  //   );
+  // }
 
   func_def() {
     let res = new ParseResult();
