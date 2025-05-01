@@ -16,6 +16,7 @@
                             | <for-statement>
                             | <while-statement>
                             | <do-while-statement>
+                            | <switch-statement>
                             | <expr>
 
 <if-statement>              -> KEYWORD:KUNG LPAREN <comp-expr> LPAREN
@@ -34,6 +35,7 @@
 
 <do-while-statement>        -> KEYWORD: BUHAT <block> SAMTANG(<expr>)
 
+<switch-statement>          -> KEYWORD: BALHIN (expr) { KEYWORD: PANANGLIT COLON }
 
 <print_statement>           -> KEYWORD:IPAKITA COLON <expr> (& <expr>)* 
 
@@ -66,10 +68,13 @@
 
 <call>                      -> <atom> (LPAREN (<expr> (COMMA <expr>)*)? RPAREN)?
 
-<atom>                      -> INT|FLOAT|STRING|BOOL|IDENTIFIER #literals
+<atom>                      -> <literals>
+                            | IDENTIFIER
                             | LPAREN <expr> RPAREN
                             | <list-expr>
                             | <func-def>
+
+<literals>                  -> INT|FLOAT|STRING|BOOL
 
 <list-expr>                 -> LSQUARE (<expr> (COMMA <expr>)*)? RSQUARE
 

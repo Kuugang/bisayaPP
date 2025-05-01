@@ -141,6 +141,32 @@ class WhileNode {
   }
 }
 
+class DoWhileNode {
+  constructor(condition_node, body_node) {
+    this.name = "<while loop>";
+    this.condition_node = condition_node;
+    this.body_node = body_node;
+    this.pos_start = this.condition_node.pos_start;
+    this.pos_end = this.body_node.pos_end;
+  }
+}
+
+class SwitchNode {
+  constructor(expr, literals, cases, default_case = null) {
+    this.name = "<switch>";
+    this.expr = expr;
+    this.literals = literals;
+    this.cases = cases;
+    this.default_case = default_case;
+    this.pos_start = this.expr.pos_start;
+
+    this.pos_end =
+      default_case != null
+        ? this.default_case.pos_end
+        : this.cases[this.cases.length - 1].pos_end;
+  }
+}
+
 class ListNode {
   constructor(element_nodes, pos_start, pos_end) {
     this.element_nodes = element_nodes;
@@ -276,6 +302,8 @@ module.exports = {
   PostfixOperationNode,
   ForNode,
   WhileNode,
+  DoWhileNode,
+  SwitchNode,
   ListNode,
   BinaryOperationNode,
   PrintNode,

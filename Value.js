@@ -114,6 +114,22 @@ class Char extends Value {
     this.type = TT_LETRA;
   }
 
+  eq(other) {
+    if (other instanceof Char) {
+      return [new Boolean(this.value === other.value ? "OO" : "DILI"), null];
+    } else {
+      return [null, super.illegal_operation(other)];
+    }
+  }
+
+  ne(other) {
+    if (other instanceof Char) {
+      return [new Boolean(this.value !== other.value ? "OO" : "DILI"), null];
+    } else {
+      return [null, super.illegal_operation(other)];
+    }
+  }
+
   copy() {
     let copy = new Char(this.value);
     copy.set_pos(this.pos_start, this.pos_end);
@@ -127,6 +143,21 @@ class String extends Value {
     super();
     this.value = value;
     this.type = TT_STRING;
+  }
+
+  eq(other) {
+    if (other instanceof String) {
+      return [new Boolean(this.value === other.value ? "OO" : "DILI"), null];
+    } else {
+      return [null, super.illegal_operation(other)];
+    }
+  }
+  ne(other) {
+    if (other instanceof String) {
+      return [new Boolean(this.value !== other.value ? "OO" : "DILI"), null];
+    } else {
+      return [null, super.illegal_operation(other)];
+    }
   }
 
   copy() {
@@ -211,14 +242,10 @@ class Boolean extends Value {
 }
 
 class Number extends Value {
-  constructor(value, type) {
+  constructor(value, type = "NUMERO") {
     super();
     this.type = type;
-    if (type == "TIPIK") {
-      this.value = Math.floor(value);
-    } else {
-      this.value = global.Number(value);
-    }
+    this.value = global.Number(value);
   }
 
   add(other) {

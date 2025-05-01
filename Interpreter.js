@@ -28,7 +28,12 @@ const { Context } = require("./Context.js");
 const { RTResult } = require("./RTResult.js");
 
 var readlineSync = require("readline-sync");
-const { VarAccessNode, FuncDefNode, CallNode } = require("./Node.js");
+const {
+  VarAccessNode,
+  FuncDefNode,
+  CallNode,
+  BreakNode,
+} = require("./Node.js");
 const { SymbolTable } = require("./SymbolTable.js");
 
 const throwTypeError = (node, expected, received, context) => {
@@ -194,8 +199,8 @@ class Interpreter {
           [result, error] = left.and(right);
         } else if (node.op_tok.matches(TT_KEYWORD, "O")) {
           [result, error] = left.or(right);
-          break;
         }
+        break;
       case TT_CONCAT:
         [result, error] = left.concat(right);
         break;
@@ -290,6 +295,89 @@ class Interpreter {
     return res.success(new Number(null));
   }
 
+  visit_DoWhileNode(node, context) {
+    let res = new RTResult();
+
+    let new_context = new Context(node.name, context, node.pos_start);
+    new_context.symbol_table = new SymbolTable(context.symbol_table);
+
+    let symbol_table = new_context.symbol_table;
+
+    while (true) {
+      new_context.symbol_table = symbol_table;
+
+      res.register(this.visit(node.body_node, new_context));
+
+      if (
+        res.should_return() &&
+        res.loop_should_continue == false &&
+        res.loop_should_break == false
+      ) {
+        return res;
+      }
+
+      if (res.loop_should_continue) continue;
+
+      if (res.loop_should_break) break;
+
+      let condition_node = res.register(
+        this.visit(node.condition_node, new_context),
+      );
+      if (res.should_return()) return res;
+      if (condition_node.value === "DILI") {
+        break;
+      }
+
+      symbol_table = new SymbolTable(symbol_table);
+    }
+    return res.success(new Number(null));
+  }
+
+  visit_SwitchNode(node, context) {
+    let res = new RTResult();
+    let cases = node.cases;
+    let literals = node.literals;
+    let default_case = node.default_case;
+    let expr_value = res.register(this.visit(node.expr, context));
+    if (res.should_return()) return res;
+
+    for (let i = 0; i < cases.length; i++) {
+      let literal_value = res.register(this.visit(literals[i], context));
+      if (res.should_return()) return res;
+
+      let [result, error] = literal_value.eq(expr_value);
+      if (error) return res.failure(error);
+
+      if (result.is_true()) {
+        let case_context = new Context("<case>", context);
+        let symbol_table = new SymbolTable(context.symbol_table);
+        case_context.symbol_table = symbol_table;
+        res.register(this.visit(cases[i], case_context));
+
+        if (res.should_return_case()) return res;
+
+        for (let j = i + 1; j < cases.length; j++) {
+          let case_context = new Context("<case>", context);
+          let symbol_table = new SymbolTable(context.symbol_table);
+          case_context.symbol_table = symbol_table;
+
+          res.register(this.visit(cases[j], case_context));
+          if (res.should_return_case()) return res;
+        }
+        break;
+      }
+    }
+
+    if (default_case) {
+      let case_context = new Context("<case>", context);
+      let symbol_table = new SymbolTable(context.symbol_table);
+      case_context.symbol_table = symbol_table;
+      res.register(this.visit(default_case, case_context));
+      if (res.should_return_case()) return res;
+    }
+    return res.success(new Number(null));
+  }
+
   visit_ListNode(node, context) {
     let res = new RTResult();
     let elements = [];
@@ -297,6 +385,7 @@ class Interpreter {
       let value = res.register(this.visit(element_node, context));
 
       if (res.should_return()) return res; // Exit function immediately
+      if (res.should_return_case()) return res;
 
       elements.push(value);
     }
@@ -313,16 +402,16 @@ class Interpreter {
     let variable = context.symbol_table.get(var_name);
     let value = null;
 
-    if (node.value_node && node.value_node instanceof CallNode) {
-      return res.failure(
-        new RTError(
-          node.value_node.pos_start,
-          node.value_node.pos_end,
-          `${node.value_node.node_to_call.var_name_tok.value} cannot be used as a function`,
-          context,
-        ),
-      );
-    }
+    // if (node.value_node && node.value_node instanceof CallNode) {
+    //   return res.failure(
+    //     new RTError(
+    //       node.value_node.pos_start,
+    //       node.value_node.pos_end,
+    //       `${node.value_node.node_to_call.var_name_tok.value} cannot be used as a function`,
+    //       context,
+    //     ),
+    //   );
+    // }
 
     if (
       node.assign_type === "definition" &&
@@ -374,7 +463,7 @@ class Interpreter {
           ),
         );
       }
-
+      if (variable.context === null) variable.context = context;
       variable.context.symbol_table.set(var_name, value);
       return res.success(value);
     }
@@ -600,7 +689,7 @@ class Interpreter {
   }
 
   visit_BreakNode(node, context) {
-    if (context.display_name !== "<loop>") {
+    if (!["<loop>", "<case>"].includes(context.display_name)) {
       return new RTResult().failure(
         new RTError(
           node.pos_start,
@@ -610,7 +699,12 @@ class Interpreter {
         ),
       );
     }
-    return new RTResult().success_break();
+
+    if (context.display_name === "<loop>") {
+      return new RTResult().success_break();
+    } else if (context.display_name === "<case>") {
+      return new RTResult().success_switch_break();
+    }
   }
 
   visit_ContinueNode(node, context) {

@@ -17,6 +17,8 @@ const file_name = args[2];
 
 let global_symbol_table = new SymbolTable();
 global_symbol_table.set("PRINT", BuiltInFunction.print);
+global_symbol_table.set("MATH_RANDOM", BuiltInFunction.math_random);
+global_symbol_table.set("MATH_FLOOR", BuiltInFunction.math_floor);
 
 function run(fn, text) {
   let lexer = new Lexer(fn, text);

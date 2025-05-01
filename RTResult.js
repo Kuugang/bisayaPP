@@ -9,6 +9,7 @@ class RTResult {
     this.func_return_value = null;
     this.loop_should_continue = false;
     this.loop_should_break = false;
+    this.switch_should_break = false;
   }
 
   register(res) {
@@ -16,6 +17,7 @@ class RTResult {
     this.func_return_value = res.func_return_value;
     this.loop_should_continue = res.loop_should_continue;
     this.loop_should_break = res.loop_should_break;
+    this.switch_should_break = res.switch_should_break;
     return res.value;
   }
 
@@ -43,10 +45,20 @@ class RTResult {
     return this;
   }
 
+  success_switch_break() {
+    this.reset();
+    this.switch_should_break = true;
+    return this;
+  }
+
   failure(error) {
     this.reset();
     this.error = error;
     return this;
+  }
+
+  should_return_case() {
+    return this.error || this.switch_should_break;
   }
 
   should_return() {
@@ -63,4 +75,3 @@ class RTResult {
 module.exports = {
   RTResult,
 };
-

@@ -1,0 +1,116 @@
+SUGOD
+    MUGNA LETRA quit =  'y'   
+    MUGNA NUMERO playerChoice
+    MUGNA NUMERO computerChoice
+
+    MUGNA NUMERO playerScore = 0
+    MUGNA NUMERO computerScore = 0
+
+    LIHOK getRandomChoice() NUMERO PUNDOK{
+        IULI MATH_FLOOR(MATH_RANDOM() * 3) + 1
+    }
+
+
+    SAMTANG(quit <> 'n')PUNDOK{
+        BUHAT PUNDOK{
+
+            IPAKITA: "Rock Paper Scissor (1) Rock, (2) Paper, (3) Scissor: "
+            DAWAT: playerChoice
+
+            computerChoice = getRandomChoice()
+
+            BALHIN (playerChoice){
+                PANANGLIT 1:
+                    IPAKITA: "You chose Rock"
+                    IPAKITA: $
+
+                    BALHIN (computerChoice){
+                        PANANGLIT 1:
+                            IPAKITA: "Computer chose Rock"
+                            IPAKITA: $
+                            IPAKITA: "It's a tie!"
+                            HUNONG
+                        PANANGLIT 2:
+                            IPAKITA: "Computer chose Paper"
+                            IPAKITA: $
+                            IPAKITA: "You lost!"
+                            computerScore = computerScore + 1
+                            HUNONG
+                        PANANGLIT 3:
+                            IPAKITA: "Computer chose Scissor"
+                            IPAKITA: $
+                            IPAKITA: "You win!"
+                            playerScore = playerScore + 1
+                            HUNONG
+                    }
+
+                    HUNONG
+                PANANGLIT 2:
+                    IPAKITA: "You chose Paper"
+
+                    IPAKITA: $
+
+                    BALHIN (computerChoice){
+                        PANANGLIT 1:
+                            IPAKITA: "Computer chose Rock"
+                            IPAKITA: $
+                            IPAKITA: "You win!"
+                            playerScore = playerScore + 1
+                            HUNONG
+                        PANANGLIT 2:
+                            IPAKITA: "Computer chose Paper"
+                            IPAKITA: $
+                            IPAKITA: "It's a tie!"
+                            HUNONG
+                        PANANGLIT 3:
+                            IPAKITA: "Computer chose Scissor"
+                            IPAKITA: $
+                            IPAKITA: "You lost!"
+                            computerScore = computerScore + 1
+                            HUNONG
+                    }
+
+                    HUNONG
+                    HUNONG
+                PANANGLIT 3:
+                    IPAKITA: "You chose Scissor"
+
+                    IPAKITA: $
+
+                    BALHIN (computerChoice){
+                        PANANGLIT 1:
+                            IPAKITA: "Computer chose Rock"
+                            IPAKITA: $
+                            IPAKITA: "You lost!"
+                            computerScore = computerScore + 1
+                            HUNONG
+                        PANANGLIT 2:
+                            IPAKITA: "Computer chose Paper"
+                            IPAKITA: $
+                            IPAKITA: "You win!"
+                            playerScore = playerScore + 1
+                            HUNONG
+                        PANANGLIT 3:
+                            IPAKITA: "Computer chose Scissor"
+                            IPAKITA: $
+                            IPAKITA: "It's a tie!"
+                            HUNONG
+                    }
+
+                    HUNONG
+                MATIK:
+                    IPAKITA: "Invalid choice"
+                    HUNONG
+            }
+
+
+            IPAKITA: $ & "Player: " & playerScore & " | Computer: " & computerScore
+
+        }SAMTANG(playerChoice <> 1 UG playerChoice <> 2 UG playerChoice <> 3)
+
+
+        IPAKITA: $ & "Continue? (y/n): "
+        DAWAT: quit
+    }
+
+KATAPUSAN

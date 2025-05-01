@@ -16,9 +16,10 @@ class BaseFunction extends Value {
     new_context.symbol_table = new SymbolTable(new_context.parent.symbol_table);
     return new_context;
   }
-
   check_args(arg_names, args) {
     let res = new RTResult();
+
+    // Check argument count
     if (args.length > arg_names.length) {
       return res.failure(
         new RTError(
@@ -41,29 +42,34 @@ class BaseFunction extends Value {
       );
     }
 
+    // Check argument types
     for (let i = 0; i < arg_names.length; i++) {
-      if (arg_names[i].type != args[i].type) {
-        return res.failure(
-          new TypeError(
-            args[i].pos_start,
-            args[i].pos_end,
-            `Expected ${arg_names[i].type} but got ${args[i].type}`,
-            this.context,
-          ),
-        );
-      }
-    }
-
-    for (let i = 0; i < arg_names.length; i++) {
-      if (args[i] == null) {
-        return res.failure(
-          new RTError(
-            this.pos_start,
-            this.pos_end,
-            `'${args[i]}' is not defined`,
-            this.context,
-          ),
-        );
+      // Skip type check if the argument type is null (accepts any type)
+      if (arg_names[i].type !== null) {
+        // Handle union types
+        if (arg_names[i].type.union) {
+          if (!arg_names[i].type.union.includes(args[i].type)) {
+            return res.failure(
+              new TypeError(
+                args[i].pos_start || this.pos_start,
+                args[i].pos_end || this.pos_end,
+                `Expected one of [${arg_names[i].type.union.join(", ")}] but got ${args[i].type}`,
+                this.context,
+              ),
+            );
+          }
+        }
+        // Handle single type
+        else if (args[i].type !== arg_names[i].type) {
+          return res.failure(
+            new TypeError(
+              args[i].pos_start || this.pos_start,
+              args[i].pos_end || this.pos_end,
+              `Expected ${arg_names[i].type} but got ${args[i].type}`,
+              this.context,
+            ),
+          );
+        }
       }
     }
 
@@ -130,6 +136,47 @@ class BuiltInFunction extends BaseFunction {
     console.log(String(exec_ctx.symbol_table.get("value")));
     return new RTResult().success(new Number(0));
   }
+
+  execute_math_random(exec_ctx) {
+    return new RTResult().success(new Number(Math.random(), "TIPIK"));
+  }
+
+  execute_math_floor(exec_ctx) {
+    const value = exec_ctx.symbol_table.get("value");
+
+    // Handle NUMERO type directly
+    if (value.type === "NUMERO") {
+      return new RTResult().success(new Number(Math.floor(value.value)));
+    }
+    // Handle TIPIK type with conversion
+    else if (value.type === "TIPIK") {
+      // Try to convert TIPIK to NUMERO
+      const numValue = parseFloat(value.value);
+      if (!isNaN(numValue)) {
+        return new RTResult().success(new Number(Math.floor(numValue)));
+      } else {
+        return new RTResult().failure(
+          new TypeError(
+            this.pos_start,
+            this.pos_end,
+            `Cannot convert TIPIK '${value.value}' to NUMERO for math_floor`,
+            exec_ctx,
+          ),
+        );
+      }
+    }
+    // Should not reach here due to type checking in check_args, but as a fallback
+    else {
+      return new RTResult().failure(
+        new TypeError(
+          this.pos_start,
+          this.pos_end,
+          `Expected NUMERO or TIPIK but got ${value.type}`,
+          exec_ctx,
+        ),
+      );
+    }
+  }
 }
 
 class Function extends BaseFunction {
@@ -194,7 +241,22 @@ class Function extends BaseFunction {
   }
 }
 
-BuiltInFunction.prototype.execute_print.arg_names = ["value"];
+BuiltInFunction.prototype.execute_print.arg_names = [
+  { name: { value: "value" }, type: null },
+];
+BuiltInFunction.prototype.execute_math_random.arg_names = [];
+
+BuiltInFunction.prototype.execute_math_floor.arg_names = [
+  {
+    name: { value: "value" },
+    type: { union: ["TIPIK", "NUMERO"] },
+  },
+];
+
 BuiltInFunction.print = new BuiltInFunction("print");
+
+BuiltInFunction.math_random = new BuiltInFunction("math_random");
+
+BuiltInFunction.math_floor = new BuiltInFunction("math_floor");
 
 module.exports = { BuiltInFunction, Function };

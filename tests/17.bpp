@@ -1,0 +1,13 @@
+SUGOD
+    MUGNA NUMERO a = 0
+
+    BUHAT 
+
+    PUNDOK{
+        IPAKITA: a & $
+        a = a + 1
+    }
+    SAMTANG(a < 0)
+    IPAKITA: "HELLO"
+
+KATAPUSAN

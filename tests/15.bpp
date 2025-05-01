@@ -1,11 +1,15 @@
 SUGOD
     MUGNA TINUOD a = DILI "OO"
 
-    KUNG(DILI DILI a)PUNDOK{
+    KUNG("OO")PUNDOK{
         IPAKITA: "1"
 
-        KUNG (a) PUNDOK {
+        KUNG ("DILI") PUNDOK {
             IPAKITA: " 1"
+        }
+
+        KUNG ("OO") PUNDOK{
+            IPAKITA: "        4"
         }
 
     }

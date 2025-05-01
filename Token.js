@@ -54,7 +54,11 @@ const KEYWORDS = [
   "PUNDOK", // {} block of code
   "ALANG SA", //FOR LOOP
   "IPAKITA", //PRINT
+  "BUHAT", //DO
   "SAMTANG", //WHILE LOOP
+  "BALHIN", //SWITCH
+  "PANANGLIT", //CASE
+  "MATIK", //DEFAULT
   "HUNONG", //BREAK,
   "PADAYON", //CONTINUE
   "IULI", //RETURN,
